@@ -2,11 +2,11 @@ var admin = require("firebase-admin");
 //uncomment when using firebase
 //also uncomment in ../routers/userrouter.js
 
-// var serviceAccount = require("./secretefile.json");
+var serviceAccount = require("./secretefile.json");
 
-// admin.initializeApp({
-//   credential: admin.credential.cert(serviceAccount)
-// });
+admin.initializeApp({
+   credential: admin.credential.cert(serviceAccount)
+});
 
 const notification_options = {
     priority: "high",
