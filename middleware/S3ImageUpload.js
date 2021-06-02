@@ -1,20 +1,25 @@
 const AWS =require('aws-sdk')
 
-const upload_to_S3 = async (file) => {
+const upload_to_S3 = async (file, post) => {
     const s3 = new AWS.S3({
         accessKeyId: process.env.AWS_ID,
         secretAccessKey: process.env.AWS_SECRETE,
-        Bucket: `${process.env.AWS_BUCKET_NAME}/images`,
+        Bucket: `${process.env.AWS_BUCKET_NAME}`,
     })
 
     const randomNo = await Math.floor(Math.random() * 10000)
     const fileName = `${randomNo}${Date.now()}${file.fileExtension}`
     const params = {
-        Bucket: `${process.env.AWS_BUCKET_NAME}/images`,
         Key: fileName,
         Body: file.buffer,
         ACL: "public-read"
     } 
+
+    if(post){
+        params.Bucket = `${process.env.AWS_BUCKET_NAME}/images/post`
+    } else {
+        params.Bucket = `${process.env.AWS_BUCKET_NAME}/images/user`
+    }
 
     return new Promise((resolve, reject) => {
         console.log(params)

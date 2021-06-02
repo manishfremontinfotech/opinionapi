@@ -3,7 +3,6 @@ const userRouter = require('../routers/userRouter')
 const app = express()
 const cors = require('cors')
 const pool = require('../dbConnection')
-const { admin } = require('../firebaseSetup/config')
 
 //cross origin requests
 app.use(cors())

@@ -1,6 +1,6 @@
 var mysql = require('mysql2');
 
-if(process.env.NODE_ENV === 'production'){
+if(process.env.NODE_ENV == 'production'){
     pool = mysql.createPool({
         host     :process.env.DB_HOST,
         port     :process.env.DB_PORT,
@@ -15,7 +15,7 @@ if(process.env.NODE_ENV === 'production'){
         host     : 'localhost',
         port     :'3306',
         user     :'ankit',
-        password : 'ankit',
+        password : 'Ankit@1998',
         database : 'test',
         insecureAuth : true,
         multipleStatements: true

@@ -7,6 +7,7 @@ const {upload_to_S3, delete_from_S3} = require('../middleware/S3ImageUpload')
 
 const countryCode = require('../middleware/countryCodes')
 const imageUpload = require('../middleware/imageUpload')
+const compressImage = require('../middleware/compressImage')
 
 //uncomment it when using notification
 //also uncomment the firebase setup 
@@ -54,9 +55,10 @@ router.post('/addUser', imageUpload, async (req, res) => {
             })
         }
 
-
+        //resize image
+        req.file.buffer = await compressImage(req.file.buffer, 200, 200)
         /* Uplading to bucket S3 */
-        const [s3data, error] = await upload_to_S3(req.file)
+        const [s3data, error] = await upload_to_S3(req.file, false)
         if(error){
             return res.status(505).send({
                 error:{
@@ -67,7 +69,7 @@ router.post('/addUser', imageUpload, async (req, res) => {
         }
 
 
-        const Photo = s3data.Location
+        const Photo = s3data.Key
         const pushNotification = body.pushNotification || 'YES'
         const googleSignIn = body.googleSignIn || "xyz-token"
         const facebookSignIn = body.facebookSignIn || "xyz-token"
@@ -282,8 +284,10 @@ router.post('/addPost', imageUpload, async (req, res) => {
             })
         }
 
+        //resize image
+        req.file.buffer = await compressImage(req.file.buffer, 200, 200)
         /* Uplading to bucket S3 */
-        const [s3data, error] = await upload_to_S3(req.file)
+        const [s3data, error] = await upload_to_S3(req.file, true)
         if(error){
             return res.status(505).send({
                 error:{
@@ -958,9 +962,10 @@ router.post('/UpdateUser', imageUpload, async (req, res) => {
             })
         }
 
-
+        //resize image
+        req.file.buffer = await compressImage(req.file.buffer, 200, 200)
         /* Uplading to bucket S3 */
-        const [s3data, error] = await upload_to_S3(req.file)
+        const [s3data, error] = await upload_to_S3(req.file, false)
         if(error){
             return res.status(505).send({
                 error:{
