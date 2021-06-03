@@ -4,7 +4,6 @@ const upload_to_S3 = async (file, post) => {
     const s3 = new AWS.S3({
         accessKeyId: process.env.AWS_ID,
         secretAccessKey: process.env.AWS_SECRETE,
-        Bucket: `${process.env.AWS_BUCKET_NAME}`,
     })
 
     const randomNo = await Math.floor(Math.random() * 10000)
@@ -16,9 +15,9 @@ const upload_to_S3 = async (file, post) => {
     } 
 
     if(post){
-        params.Bucket = `${process.env.AWS_BUCKET_NAME}/images/post`
+        params.Bucket =`${process.env.AWS_BUCKET_USER}`
     } else {
-        params.Bucket = `${process.env.AWS_BUCKET_NAME}/images/user`
+        params.Bucket = `${process.env.AWS_BUCKET_POST}`
     }
 
     return new Promise((resolve, reject) => {
