@@ -1024,7 +1024,7 @@ router.post('/getUserProfile', async (req, res) => {
             })
         }
 
-        const query = `CALL GetUserProfile("${UserSingUpId}", "${Pword}", @status, @PhoneNumber, @country, @photo, @emailId, @name); SELECT @status, @status, @PhoneNumber, @country, @photo, @emailId, @name;`
+        const query = `CALL GetUserProfile("${UserSingUpId}", "${pWord}", @status, @PhoneNumber, @country, @photo, @emailId, @name); SELECT @status, @status, @PhoneNumber, @country, @photo, @emailId, @name;`
         DBProcedure(query, (error, results) => {
             if(error){
                 return res.status(error.status).send(error.response)
