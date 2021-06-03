@@ -69,7 +69,7 @@ router.post('/addUser', imageUpload, async (req, res) => {
         }
 
 
-        const Photo = s3data.Key
+        const Photo = s3data.Location
         const pushNotification = body.pushNotification || 'YES'
         const googleSignIn = body.googleSignIn || "xyz-token"
         const facebookSignIn = body.facebookSignIn || "xyz-token"
@@ -77,12 +77,12 @@ router.post('/addUser', imageUpload, async (req, res) => {
         const query = `CALL AddUser("${UserEmail}","${UserName}","${Phone}",${CountryCode}, "${Photo}", @status, "${Password}","${pushNotification}","${googleSignIn}", "${facebookSignIn}"); SELECT @status;`
         DBProcedure(query, (error, results) => {
             if(error){
-                delete_from_S3(s3data.Key)
+                delete_from_S3(s3data.Key, false)
                 return res.status(error.status).send(error.response)
             }
 
             if(results[1][0]['@status'] != 1){
-                delete_from_S3(s3data.Key)
+                delete_from_S3(s3data.Key, false)
             }
             res.send({
                 status: results[1][0]['@status']
@@ -304,13 +304,13 @@ router.post('/addPost', imageUpload, async (req, res) => {
         const query = `CALL AddPost("${UserEmail}", "${PhotoLink}", "${Question}", ${Rating}, "${Comment}", "${Attachment}", "${Pword}", @status, @lastId); SELECT @status, @lastId;`
         DBProcedure(query, (error, results) => {
             if(error){
-                delete_from_S3(s3data.Key)
+                delete_from_S3(s3data.Key, true)
                 return res.status(error.status).send(error.response)
             }
 
             //console.log("outer Result :::: ", results)
             if(results[1][0]['@status'] != 1){
-                delete_from_S3(s3data.Key)
+                delete_from_S3(s3data.Key, true)
                 return res.send({
                     status: results[1][0]['@status']
                 })

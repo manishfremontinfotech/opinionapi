@@ -1,23 +1,40 @@
 const AWS =require('aws-sdk')
 
 const upload_to_S3 = async (file, post) => {
-    const s3 = new AWS.S3({
-        accessKeyId: process.env.AWS_ID,
-        secretAccessKey: process.env.AWS_SECRETE,
-    })
+
+    let s3
+    if(post){
+        s3 = new AWS.S3({
+            accessKeyId: process.env.AWS_ID,
+            secretAccessKey: process.env.AWS_SECRETE,
+            Bucket: `${process.env.AWS_BUCKET_POST}`,
+        })
+    } else {
+        s3 = new AWS.S3({
+            accessKeyId: process.env.AWS_ID,
+            secretAccessKey: process.env.AWS_SECRETE,
+            Bucket: `${process.env.AWS_BUCKET_USER}`,
+        })
+    }
 
     const randomNo = await Math.floor(Math.random() * 10000)
     const fileName = `${randomNo}${Date.now()}${file.fileExtension}`
-    const params = {
-        Key: fileName,
-        Body: file.buffer,
-        ACL: "public-read"
-    } 
-
+    
+    let params
     if(post){
-        params.Bucket =`${process.env.AWS_BUCKET_USER}`
+        params = {
+            Key: fileName,
+            Body: file.buffer,
+            ACL: "public-read",
+            Bucket :`${process.env.AWS_BUCKET_POST}`
+        }
     } else {
-        params.Bucket = `${process.env.AWS_BUCKET_POST}`
+        params = {
+            Key: fileName,
+            Body: file.buffer,
+            ACL: "public-read",
+            Bucket : `${process.env.AWS_BUCKET_USER}`
+        }
     }
 
     return new Promise((resolve, reject) => {
@@ -35,18 +52,42 @@ const upload_to_S3 = async (file, post) => {
     })
 }
 
-const delete_from_S3 = (key) => {
-    const s3 = new AWS.S3({
-        accessKeyId: process.env.AWS_ID,
-        secretAccessKey: process.env.AWS_SECRETE,
-        Bucket: `${process.env.AWS_BUCKET_NAME}`,
-    })
+const delete_from_S3 = (key, post) => {
+    let s3
+    if(post){
+        s3 = new AWS.S3({
+            accessKeyId: process.env.AWS_ID,
+            secretAccessKey: process.env.AWS_SECRETE,
+            Bucket: `${process.env.AWS_BUCKET_POST}`,
+        })
+    } else {
+        s3 = new AWS.S3({
+            accessKeyId: process.env.AWS_ID,
+            secretAccessKey: process.env.AWS_SECRETE,
+            Bucket: `${process.env.AWS_BUCKET_USER}`,
+        })
+    }
+
     console.log(key)
 
-    var params = {
-        Bucket:`${process.env.AWS_BUCKET_NAME}`,
-        Key: key
+    let params
+    if(post){
+        params = {
+            Key: key,
+            Body: file.buffer,
+            ACL: "public-read",
+            Bucket :`${process.env.AWS_BUCKET_POST}`
+        }
+    } else {
+        params = {
+            Key: key,
+            Body: file.buffer,
+            ACL: "public-read",
+            Bucket :`${process.env.AWS_BUCKET_USER}`
+        }
     }
+
+    
     s3.deleteObject(params, function (err, data) {
         if (data) {
             console.log("File deleted successfully");
@@ -63,3 +104,4 @@ const delete_from_S3 = (key) => {
 
 
 module.exports = {upload_to_S3, delete_from_S3}
+
