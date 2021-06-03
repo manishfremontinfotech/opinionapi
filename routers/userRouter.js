@@ -56,7 +56,7 @@ router.post('/addUser', imageUpload, async (req, res) => {
         }
 
         //resize image
-        req.file.buffer = await compressImage(req.file.buffer, 200, 200)
+       //req.file.buffer = await compressImage(req.file.buffer, 200, 200)
         /* Uplading to bucket S3 */
         const [s3data, error] = await upload_to_S3(req.file, false)
         if(error){
@@ -285,7 +285,7 @@ router.post('/addPost', imageUpload, async (req, res) => {
         }
 
         //resize image
-        req.file.buffer = await compressImage(req.file.buffer, 200, 200)
+       // req.file.buffer = await compressImage(req.file.buffer, 200, 200)
         /* Uplading to bucket S3 */
         const [s3data, error] = await upload_to_S3(req.file, true)
         if(error){
@@ -963,7 +963,7 @@ router.post('/UpdateUser', imageUpload, async (req, res) => {
         }
 
         //resize image
-        req.file.buffer = await compressImage(req.file.buffer, 200, 200)
+      	//req.file.buffer = await compressImage(req.file.buffer, 200, 200)
         /* Uplading to bucket S3 */
         const [s3data, error] = await upload_to_S3(req.file, false)
         if(error){
