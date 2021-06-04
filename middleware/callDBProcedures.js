@@ -25,7 +25,7 @@ const DBProcedure = async (query, callback) => {
                                 message:'Database failed to execute query.'
                             }
                         },
-                        status:500
+                        status:502
                     }, null)
 
                 }

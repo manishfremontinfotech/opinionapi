@@ -74,15 +74,11 @@ const delete_from_S3 = (key, post) => {
     if(post){
         params = {
             Key: key,
-            Body: file.buffer,
-            ACL: "public-read",
             Bucket :`${process.env.AWS_BUCKET_POST}`
         }
     } else {
         params = {
             Key: key,
-            Body: file.buffer,
-            ACL: "public-read",
             Bucket :`${process.env.AWS_BUCKET_USER}`
         }
     }

@@ -11,7 +11,7 @@ const compressImage = require('../middleware/compressImage')
 
 //uncomment it when using notification
 //also uncomment the firebase setup 
-//const sendNotification = require('../firebaseSetup/sendNotification')
+const sendNotification = require('../firebaseSetup/sendNotification')
 
 
 router.post('/addUser', imageUpload, async (req, res) => {
@@ -43,13 +43,15 @@ router.post('/addUser', imageUpload, async (req, res) => {
         if(!req.file || req.imageUploadError){
             missing.push('Photo')
         }
+	if(!body.pushNotification|| body.pushNotification == ""){
+		missing.push('pushNotificationToken')
+	}
 
         //If anything missing sending it back to user with error
         if(missing.length){
-            return res.status(403).send({
+            return res.status(400).send({
                 error:{
                     message:'Error/missing feilds',
-                    missing,
                 },
                 data:req.body
             })
@@ -60,7 +62,7 @@ router.post('/addUser', imageUpload, async (req, res) => {
         /* Uplading to bucket S3 */
         const [s3data, error] = await upload_to_S3(req.file, false)
         if(error){
-            return res.status(505).send({
+            return res.status(502).send({
                 error:{
                     message:'Fail to upload image to storage.',
                     missing,
@@ -70,9 +72,9 @@ router.post('/addUser', imageUpload, async (req, res) => {
 
 
         const Photo = s3data.Location
-        const pushNotification = body.pushNotification || 'YES'
-        const googleSignIn = body.googleSignIn || "xyz-token"
-        const facebookSignIn = body.facebookSignIn || "xyz-token"
+        const pushNotification = body.pushNotification || 'NULL'
+        const googleSignIn = body.googleSignIn || "NULL"
+        const facebookSignIn = body.facebookSignIn || "NULL"
 
         const query = `CALL AddUser("${UserEmail}","${UserName}","${Phone}",${CountryCode}, "${Photo}", @status, "${Password}","${pushNotification}","${googleSignIn}", "${facebookSignIn}"); SELECT @status;`
         DBProcedure(query, (error, results) => {
@@ -121,7 +123,7 @@ router.post('/addFriend', async (req, res) => {
 
         //If anything missing sending it back to user with error
         if(missing.length){
-            return res.status(403).send({
+            return res.status(400).send({
                 error:{
                     message:'Error/missing feilds',
                     missing,
@@ -146,15 +148,15 @@ router.post('/addFriend', async (req, res) => {
                 //  results[1][0]['@message']
                 //  results[1][0]['@NotiToakn']
                 //  ******************************
-                // const  registrationToken = results[1][0]['@NotiToakn']
-                // const message = {
-                //         notification: {
-                //             title: "Friend Request",
-                //             body: "Friend Request"//results[1][0]['@message'].toString()
-                //         }
-                //     }
+                 const  registrationToken = results[1][0]['@NotiToakn']
+                 const message = {
+                         notification: {
+                             title: "Friend Request",
+                             body: results[1][0]['@message'].toString()||"New friend request"
+                         }
+                     }
 
-                // sendNotification(registrationToken, message)
+                 sendNotification(registrationToken, message)
             }
 
         })
@@ -188,7 +190,7 @@ router.post('/addFriendRequest', async (req, res) => {
 
         //If anything missing sending it back to user with error
         if(missing.length){
-            return res.status(403).send({
+            return res.status(400).send({
                 error:{
                     message:'Error/missing feilds',
                     missing,
@@ -213,15 +215,15 @@ router.post('/addFriendRequest', async (req, res) => {
                 //  results[1][0]['@message']
                 //  results[1][0]['@NotiToakn']
                 //  ******************************
-                // const  registrationToken = results[1][0]['@NotiToakn']
-                // const message = {
-                //         notification: {
-                //             title: "Friend Request",
-                //             body: "Friend Request"//results[1][0]['@message'].toString()
-                //         }
-                //     }
+                 const  registrationToken = results[1][0]['@NotiToakn']
+                 const message = {
+                         notification: {
+                             title: "Friend Request",
+                             body:results[1][0]['@message'].toString() || "Friend Request"
+                         }
+                     }
 
-                // sendNotification(registrationToken, message)
+                 sendNotification(registrationToken, message)
             }
 
         })    
@@ -267,15 +269,15 @@ router.post('/addPost', imageUpload, async (req, res) => {
         if(!Pword || Pword == ''){
             missing.push('Pword')
         }
-        for (i = 0; i < emails.length; i++) {
+/*        for (i = 0; i < emails.length; i++) {
             if(!validator.isEmail(emails[i])){
                 missing.push(`Responser Email Invalid - ${i}`)
             }
         }
 
-        //If anything missing sending it back to user with error
+  */      //If anything missing sending it back to user with error
         if(missing.length){
-            return res.status(403).send({
+            return res.status(400).send({
                 error:{
                     message:'Error/missing feilds',
                     missing,
@@ -289,10 +291,9 @@ router.post('/addPost', imageUpload, async (req, res) => {
         /* Uplading to bucket S3 */
         const [s3data, error] = await upload_to_S3(req.file, true)
         if(error){
-            return res.status(505).send({
+            return res.status(502).send({
                 error:{
-                    message:'Fail to upload image to storage.',
-                    missing,
+                    message:'Fail to upload image to storage',
                 }
             })
         }
@@ -318,7 +319,8 @@ router.post('/addPost', imageUpload, async (req, res) => {
 
             let PostId = results[1][0]['@lastId']
             res.send({
-                status: results[1][0]['@status']
+                status: results[1][0]['@status'],
+		PostId 
             })
 
             let emailProcedure = ``
@@ -331,7 +333,7 @@ router.post('/addPost', imageUpload, async (req, res) => {
                     return
                 }
 
-                for(let i = 1;i < resultsArray.length;i=i+2){
+/*                for(let i = 1;i < resultsArray.length;i=i+2){
                     //console.log("Inner Result :::: ", resultsArray[i][0])
                     if(resultsArray[i][0]['@status'] == 1 && resultsArray[i][0]['@message'] && resultsArray[i][0]['@NotiToakn']){
                         // ****************************** 
@@ -349,7 +351,7 @@ router.post('/addPost', imageUpload, async (req, res) => {
         
                         // sendNotification(registrationToken, message)
                     }
-                }
+                } */
             })
 
         })
@@ -397,7 +399,7 @@ router.post('/addResponse', /* imageUpload, */ async (req, res) => {
 
         //If anything missing sending it back to user with error
         if(missing.length){
-            return res.status(403).send({
+            return res.status(400).send({
                 error:{
                     message:'Error/missing feilds',
                     missing,
@@ -449,7 +451,7 @@ router.post('/cancelFriendRequest', async (req, res) => {
 
         //If anything missing sending it back to user with error
         if(missing.length){
-            return res.status(403).send({
+            return res.status(400).send({
                 error:{
                     message:'Error/missing feilds',
                     missing,
@@ -514,7 +516,7 @@ router.post('/getResponseForAllPostsOfUser', async (req, res) => {
 
         //If anything missing sending it back to user with error
         if(missing.length){
-            return res.status(403).send({
+            return res.status(400).send({
                 error:{
                     message:'Error/missing feilds',
                     missing,
@@ -575,7 +577,7 @@ router.post('/getResponseForPost', async (req, res) => {
 
         //If anything missing sending it back to user with error
         if(missing.length){
-            return res.status(403).send({
+            return res.status(400).send({
                 error:{
                     message:'Error/missing feilds',
                     missing,
@@ -635,7 +637,7 @@ router.post('/getUserFriends', async (req, res) => {
 
         //If anything missing sending it back to user with error
         if(missing.length){
-            return res.status(403).send({
+            return res.status(400).send({
                 error:{
                     message:'Error/missing feilds',
                     missing,
@@ -690,7 +692,7 @@ router.post('/getUsers', async (req, res) => {
 
         //If anything missing sending it back to user with error
         if(missing.length){
-            return res.status(403).send({
+            return res.status(400).send({
                 error:{
                     message:'Error/missing feilds',
                     missing,
@@ -746,7 +748,7 @@ router.post('/rejectFriendRequest', async (req, res) => {
 
         //If anything missing sending it back to user with error
         if(missing.length){
-            return res.status(403).send({
+            return res.status(400).send({
                 error:{
                     message:'Error/missing feilds',
                     missing,
@@ -816,7 +818,7 @@ router.post('/removeFriend', async (req, res) => {
 
         //If anything missing sending it back to user with error
         if(missing.length){
-            return res.status(403).send({
+            return res.status(400).send({
                 error:{
                     message:'Error/missing feilds',
                     missing,
@@ -882,7 +884,7 @@ router.post('/removeUser', async (req, res) => {
 
         //If anything missing sending it back to user with error
         if(missing.length){
-            return res.status(403).send({
+            return res.status(400).send({
                 error:{
                     message:'Error/missing feilds',
                     missing,
@@ -953,10 +955,9 @@ router.post('/UpdateUser', imageUpload, async (req, res) => {
 
         //If anything missing sending it back to user with error
         if(missing.length){
-            return res.status(403).send({
+            return res.status(400).send({
                 error:{
                     message:'Error/missing feilds',
-                    missing,
                 },
                 data:req.body
             })
@@ -967,7 +968,7 @@ router.post('/UpdateUser', imageUpload, async (req, res) => {
         /* Uplading to bucket S3 */
         const [s3data, error] = await upload_to_S3(req.file, false)
         if(error){
-            return res.status(505).send({
+            return res.status(502).send({
                 error:{
                     message:'Fail to upload image to storage.',
                     missing,
@@ -976,10 +977,10 @@ router.post('/UpdateUser', imageUpload, async (req, res) => {
         }
         const userNewPhoto = s3data.Location
 
-        const query = `CALL UpdateUser("${name}","${userNewEmail}","${userNewPhoto}","${userNewPhone}", "${userNewName}", "${userOldEmail}", "${userNewPassword}", ${userNewCountryCode}, "${pWord}");`
+        const query = `CALL UpdateUser("${name}","${userNewEmail}","${userNewPhoto}","${userNewPhone}", "${userNewName}", "${userOldEmail}", "${userNewPassword}", ${userNewCountryCode}, "${pWord}", @status);`
         DBProcedure(query, (error, results) => {
             if(error){
-                delete_from_S3(s3.Key)
+                delete_from_S3(s3data.Key)
                 return res.status(error.status).send(error.response)
             }
 
@@ -1015,7 +1016,7 @@ router.post('/getUserProfile', async (req, res) => {
 
         //If anything missing sending it back to user with error
         if(missing.length){
-            return res.status(403).send({
+            return res.status(400).send({
                 error:{
                     message:'Error/missing feilds',
                     missing,
@@ -1030,11 +1031,11 @@ router.post('/getUserProfile', async (req, res) => {
                 return res.status(error.status).send(error.response)
             }
 
-            //console.log(results)
+            console.log(results)
             res.send({
                 status:results[1][0]['@status'],
                 phoneNumber:results[1][0]['@PhoneNumber'],
-                country:results[1][0]['@Country'],
+                country:results[1][0]['@country'],
                 emailId:results[1][0]['@emailId'],
                 name:results[1][0]['@name'],
                 photo:results[1][0]['@photo']
@@ -1048,5 +1049,58 @@ router.post('/getUserProfile', async (req, res) => {
     }
 })
 
+
+//*********************************************************************************************** */
+router.post('/getAnalyticsData', async (req, res) => {
+    try{
+        const body = JSON.parse(JSON.stringify(req.body)) 
+
+        let { StartDate, Endate, Pword} = body
+
+        //Checking if any of feild is missing
+        const missing = []
+        if(!StartDate || StartDate == ''){
+            missing.push('StartDate')
+        }
+        if(!Endate || Endate == ''){
+            missing.push('Endate')
+        }
+        if(!Pword || Pword == ''){
+            missing.push('Pword')
+        }
+
+        //If anything missing sending it back to user with error
+        if(missing.length){
+            return res.status(403).send({
+                error:{
+                    message:'Error/missing feilds',
+                    missing,
+                },
+                data:req.body
+            })
+        }
+
+        const query = `
+            CALL GetAnalyticsData("${StartDate}", "${Endate}", ${Pword});
+            Select * from TempAnalyticsData
+        `
+        DBProcedure(query, (error, results) => {
+            if(error){
+                return res.status(error.status).send(error.response)
+            }
+
+            console.log(results)
+            res.send({
+                TempAnalyticsData: results[1],
+                msg:"done"
+            })
+        })
+
+    } catch(e) {
+        //Network or internal errors
+        console.log(e)
+        res.status(500).send({error:{message:"API internal error, refer console for more information."}})
+    }
+})
 
 module.exports = router
