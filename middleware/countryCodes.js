@@ -1,3 +1,5 @@
+//List of countery code
+//below number there is also a list in alphabets
 const countryCode = [
 	/*UK*/44,
 /*USA*/1,

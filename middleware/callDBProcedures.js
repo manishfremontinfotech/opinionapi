@@ -1,4 +1,9 @@
 const pool = require('../dbConnection')
+//calling database quiries 
+//as result callback is called with 
+// error as error and result as null in case of error
+// error as null and result as resluts array if successfull
+
 
 const DBProcedure = async (query, callback) => {
     await pool.getConnection((err, connection) => {
@@ -30,7 +35,6 @@ const DBProcedure = async (query, callback) => {
 
                 }
                 
-                console.log(results)
                 //disconnecting form database and send success respose
                 connection.release()
                 callback(null, results)

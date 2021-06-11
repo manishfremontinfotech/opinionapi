@@ -2,21 +2,121 @@ const router = require('express').Router()
 
 const validator = require('validator')
 const sanitizeHtml = require('sanitize-html')
+
+//function for calling procedures in db
 const DBProcedure = require('../middleware/callDBProcedures')
+//function for uploding and deleteing form S3 bucket
 const {upload_to_S3, delete_from_S3} = require('../middleware/S3ImageUpload')
 
+//list of country codes
 const countryCode = require('../middleware/countryCodes')
+
+//multer middleware for image upload to nodejs
 const imageUpload = require('../middleware/imageUpload')
-const compressImage = require('../middleware/compressImage')
+//image compression middleware
+//const compressImage = require('../middleware/compressImage')
 
 //uncomment it when using notification
 //also uncomment the firebase setup 
 const sendNotification = require('../firebaseSetup/sendNotification')
+//generate unique link for verificaton
+const generateUUID = require('../middleware/randomVerificationString')
+//ses mail service
+const { sendEmail } = require('../middleware/verificationMail')
+//pages for verficaiton status
+const {success, failed} = require('./verificationTemplet')
+//fucntion for bcrytping password
+const bcryptPass = require('../middleware/bcryptPass')
 
 
+router.post('/addEmail', async (req, res) => {
+    try{
+        const body = JSON.parse(JSON.stringify(req.body)) 
+
+        let { UserEmail, pWord} = body
+        UserEmail = sanitizeHtml(UserEmail)
+
+        //check if anything feild missing
+        const missing = []
+        if(!UserEmail || UserEmail == '' || !validator.isEmail(UserEmail)){
+            missing.push('UserEmail')
+        }
+        if(!pWord || pWord == '' || pWord == 'undefined'){
+            missing.push('pWord')
+        }
+
+        //If anything missing sending it back to user with error
+        if(missing.length){
+            return res.status(400).send({
+                error:{
+                    message:'Error/missing feilds',
+                },
+                data:req.body
+            })
+        }
+
+        //generating verifing string
+        const LINK = await generateUUID()
+        //bcrypting password
+        pWord = await bcryptPass(pWord)
+
+        //calling database
+        const query = `CALL AddEmail("${UserEmail}","${pWord}",@status, "Link"); SELECT @status;`
+        DBProcedure(query, (error, results) => {
+            if(error){
+                return res.status(error.status).send(error.response)
+            }
+
+            //if user created sending verification mail
+            if(results[1][0]['@status'])
+                sendEmail(UserEmail, LINK)
+
+            res.send({
+                status: results[1][0]['@status']
+            })
+
+        })
+    
+    } catch(e) {
+        //Network or internal errors
+        console.log(e)
+        res.status(500).send({error:{message:"API internal error, refer console for more information."}})
+    }
+})
+
+//************************************************************************************** */
+router.get('/verifyEmail/:link', async (req, res) => {
+    try{
+        const Link = req.params.link
+        //chekcing if link present
+        if(!Link || Link == '' || Link == 'undefined'){
+            return res.send(failed)
+        }
+
+        //calling database
+        const query = `CALL VerifyEmail("${Link}",@status); SELECT @status;`
+        DBProcedure(query, (error, results) => {
+            if(error){
+                return res.send(failed)
+            }
+
+            if(results[1][0]['@status'] != 1)
+                return res.send(failed)
+
+            res.send(success)
+
+        })
+    
+    } catch(e) {
+        //Network or internal errors
+        console.log(e)
+        res.status(500).send({error:{message:"API internal error, refer console for more information."}})
+    }
+})
+
+//*********************************************************************************************** */
 router.post('/addUser', imageUpload, async (req, res) => {
     try{
-
         const body = JSON.parse(JSON.stringify(req.body)) 
 
         let { UserEmail, UserName, Phone, CountryCode, Password} = body
@@ -43,9 +143,9 @@ router.post('/addUser', imageUpload, async (req, res) => {
         if(!req.file || req.imageUploadError){
             missing.push('Photo')
         }
-	if(!body.pushNotification|| body.pushNotification == ""){
-		missing.push('pushNotificationToken')
-	}
+        if(!body.pushNotification|| body.pushNotification == ""){
+            missing.push('pushNotificationToken')
+        }
 
         //If anything missing sending it back to user with error
         if(missing.length){
@@ -59,6 +159,7 @@ router.post('/addUser', imageUpload, async (req, res) => {
 
         //resize image
        //req.file.buffer = await compressImage(req.file.buffer, 200, 200)
+
         /* Uplading to bucket S3 */
         const [s3data, error] = await upload_to_S3(req.file, false)
         if(error){
@@ -70,12 +171,14 @@ router.post('/addUser', imageUpload, async (req, res) => {
             })
         }
 
-
+        //bcryting password
+        Password = await bcryptPass(Password)
         const Photo = s3data.Location
         const pushNotification = body.pushNotification || 'NULL'
         const googleSignIn = body.googleSignIn || "NULL"
         const facebookSignIn = body.facebookSignIn || "NULL"
 
+        //calling database
         const query = `CALL AddUser("${UserEmail}","${UserName}","${Phone}",${CountryCode}, "${Photo}", @status, "${Password}","${pushNotification}","${googleSignIn}", "${facebookSignIn}"); SELECT @status;`
         DBProcedure(query, (error, results) => {
             if(error){
@@ -83,6 +186,7 @@ router.post('/addUser', imageUpload, async (req, res) => {
                 return res.status(error.status).send(error.response)
             }
 
+            //delete image form bucket if procedure failed
             if(results[1][0]['@status'] != 1){
                 delete_from_S3(s3data.Key, false)
             }
@@ -107,8 +211,6 @@ router.post('/addFriend', async (req, res) => {
 
         let { UserEmail, FriendEmail, Pword} = body
 
-        //******  what is pword so I can put varification on it */
-
         //Checking if any of feild is missing
         const missing = []
         if(!UserEmail || UserEmail == '' || !validator.isEmail(UserEmail)){
@@ -132,6 +234,9 @@ router.post('/addFriend', async (req, res) => {
             })
         }
 
+        //bcrypting password
+        Pword = await bcryptPass(Pword)
+        //calling database
         const query = `CALL AddFriend("${UserEmail}","${FriendEmail}",@status,"${Pword}", @NotiToakn, @message); SELECT @status, @NotiToakn, @message;`
         DBProcedure(query, (error, results) => {
             if(error){
@@ -142,6 +247,7 @@ router.post('/addFriend', async (req, res) => {
                 status:results[1][0]['@status'],
             })
 
+            //firebase notification
             if(results[1][0]['@status'] == 1 && results[1][0]['@message'] && results[1][0]['@NotiToakn']){
                 // ****************************** 
                 //  Firebase Notification
@@ -199,6 +305,9 @@ router.post('/addFriendRequest', async (req, res) => {
             })
         }
 
+        //bcrypting password
+        Pword = await bcryptPass(Pword)
+        //calling database
         const query = `CALL AddFriendRequest("${UserEmail}","${FriendEmail}",@status,"${Pword}", @NotiToakn, @message); SELECT @status, @NotiToakn, @message;`
         DBProcedure(query, (error, results) => {
             if(error){
@@ -209,6 +318,7 @@ router.post('/addFriendRequest', async (req, res) => {
                 status:results[1][0]['@status'],
             })
 
+            //firebase notification
             if(results[1][0]['@status'] == 1 && results[1][0]['@message'] && results[1][0]['@NotiToakn']){
                 // ****************************** 
                 //  Firebase Notification
@@ -269,13 +379,8 @@ router.post('/addPost', imageUpload, async (req, res) => {
         if(!Pword || Pword == ''){
             missing.push('Pword')
         }
-/*        for (i = 0; i < emails.length; i++) {
-            if(!validator.isEmail(emails[i])){
-                missing.push(`Responser Email Invalid - ${i}`)
-            }
-        }
-
-  */      //If anything missing sending it back to user with error
+        
+        //If anything missing sending it back to user with error
         if(missing.length){
             return res.status(400).send({
                 error:{
@@ -288,6 +393,7 @@ router.post('/addPost', imageUpload, async (req, res) => {
 
         //resize image
        // req.file.buffer = await compressImage(req.file.buffer, 200, 200)
+
         /* Uplading to bucket S3 */
         const [s3data, error] = await upload_to_S3(req.file, true)
         if(error){
@@ -302,6 +408,9 @@ router.post('/addPost', imageUpload, async (req, res) => {
         const PhotoLink = s3data.Location
         const Attachment = "http://xxxxxxxxx"
 
+        //bcrypting password
+        Pword = await bcryptPass(Pword)
+        //calling database
         const query = `CALL AddPost("${UserEmail}", "${PhotoLink}", "${Question}", ${Rating}, "${Comment}", "${Attachment}", "${Pword}", @status, @lastId); SELECT @status, @lastId;`
         DBProcedure(query, (error, results) => {
             if(error){
@@ -309,7 +418,7 @@ router.post('/addPost', imageUpload, async (req, res) => {
                 return res.status(error.status).send(error.response)
             }
 
-            //console.log("outer Result :::: ", results)
+            //delete image form bucket if procedure failed
             if(results[1][0]['@status'] != 1){
                 delete_from_S3(s3data.Key, true)
                 return res.send({
@@ -320,9 +429,10 @@ router.post('/addPost', imageUpload, async (req, res) => {
             let PostId = results[1][0]['@lastId']
             res.send({
                 status: results[1][0]['@status'],
-		PostId 
+		        PostId 
             })
 
+            //notificaiton to requested responders
             let emailProcedure = ``
             emails.forEach(email => {
                 emailProcedure += `CALL AddRespondersToPosts(${PostId}, "${email}", @status, @NotiToakn, @message); SELECT @status, @NotiToakn, @message;`
@@ -333,6 +443,7 @@ router.post('/addPost', imageUpload, async (req, res) => {
                     return
                 }
 
+                    //firebase notification
 /*                for(let i = 1;i < resultsArray.length;i=i+2){
                     //console.log("Inner Result :::: ", resultsArray[i][0])
                     if(resultsArray[i][0]['@status'] == 1 && resultsArray[i][0]['@message'] && resultsArray[i][0]['@NotiToakn']){
@@ -410,6 +521,9 @@ router.post('/addResponse', /* imageUpload, */ async (req, res) => {
 
         const Attachment = "http://xxxxxxxxx"
         
+        //bcrypting password
+        Pword = await bcryptPass(Pword)
+        //calling database
         const query = `CALL AddResponse("${UserEmail}", "${postId}", ${Rating}, "${Comment}", "${Attachment}", "${Pword}", @status, @NotiToakn, @message); SELECT @status, @NotiToakn, @message;`
         DBProcedure(query, (error, results) => {
             if(error){
@@ -460,6 +574,9 @@ router.post('/cancelFriendRequest', async (req, res) => {
             })
         }
 
+        //bcrypting password
+        Pword = await bcryptPass(Pword)
+        //calling database
         const query = `CALL CancelFriendRequest("${UserEmail}","${FriendEmail}","${Pword}",@status, @NotiToakn, @message); SELECT @status, @NotiToakn, @message`
         DBProcedure(query, (error, results) => {
             if(error){
@@ -470,6 +587,7 @@ router.post('/cancelFriendRequest', async (req, res) => {
                 status:results[1][0]['@status'],
             })
 
+            //firebase notification
             if(results[1][0]['@status'] == 1 && results[1][0]['@message'] && results[1][0]['@NotiToakn']){
                 // ****************************** 
                 //  Firebase Notification
@@ -503,8 +621,6 @@ router.post('/getResponseForAllPostsOfUser', async (req, res) => {
 
         let { UserEmail, Pword} = body
 
-        //******  what is pword so I can put varification on it */
-
         //Checking if any of feild is missing
         const missing = []
         if(!UserEmail || UserEmail == '' || !validator.isEmail(UserEmail)){
@@ -525,6 +641,8 @@ router.post('/getResponseForAllPostsOfUser', async (req, res) => {
             })
         }
 
+        //bcrypting password
+        Pword = await bcryptPass(Pword)
         const query = `
             CALL GetResponseForAllPostsOfUser("${UserEmail}", "${Pword}", @status); SELECT @status;
             SELECT UserEmail, postId, photoLink, question, ownrating, OwnComments, NoOfResponses, time FROM TempUsersAllPosts WHERE UserEmail="${UserEmail}";
@@ -532,13 +650,13 @@ router.post('/getResponseForAllPostsOfUser', async (req, res) => {
             DELETE FROM TempUsersAllPosts WHERE UserEmail="${UserEmail}";
             DELETE FROM TempResponses WHERE UserEmail="${UserEmail}";
         `
+        //calling database
         DBProcedure(query, (error, results) => {
             if(error){
                 return res.status(error.status).send(error.response)
             }
 
-            //console.log("results are ::::::::::::::::::::", results)
-
+            // if status 0 sending only status
             if(results[1][0]['@status'] != 1){
                 return res.send({
                     status:results[1][0]['@status'],
@@ -563,8 +681,6 @@ router.post('/getResponseForPost', async (req, res) => {
     try{
         const body = JSON.parse(JSON.stringify(req.body)) 
         let { PostId, UserEmail} = body
-
-        //******  what is pword so I can put varification on it */
 
         //Checking if any of feild is missing
         const missing = []
@@ -599,6 +715,7 @@ router.post('/getResponseForPost', async (req, res) => {
             SELECT postId, ResponserEmail, Rating, Comment, time, attachment FROM TempResponses WHERE postId=${PostId};
             DELETE FROM TempResponses WHERE postId=${PostId};
         `
+        //calling database
         DBProcedure(query, (error, results) => {
             if(error){
                 return res.status(error.status).send(error.response)
@@ -624,8 +741,6 @@ router.post('/getUserFriends', async (req, res) => {
 
         let { UserEmail, Pword} = body
 
-        //******  what is pword so I can put varification on it */
-
         //Checking if any of feild is missing
         const missing = []
         if(!UserEmail || UserEmail == '' || !validator.isEmail(UserEmail)){
@@ -646,11 +761,14 @@ router.post('/getUserFriends', async (req, res) => {
             })
         }
 
+        //bcrypting password
+        Pword = await bcryptPass(Pword)
         const query = `
             CALL GetUserFriends("${UserEmail}", "${Pword}");
             SELECT userMail, FriendEmailId, FriendName, FriendPhotoLink, FriendRequestEmailId, FriendRequestName, FriendRequestPhotoLink FROM TempFriendList WHERE userMail="${UserEmail}";
             DELETE FROM TempFriendList WHERE userMail="${UserEmail}";
         `
+        //calling database
         DBProcedure(query, (error, results) => {
             if(error){
                 return res.status(error.status).send(error.response)
@@ -674,9 +792,7 @@ router.post('/getUsers', async (req, res) => {
     try{
         const body = JSON.parse(JSON.stringify(req.body)) 
 
-        let { FirstPara, SecondPara} = body
-
-        //******  what is pword so I can put varification on it */
+        let { FirstPara, SecondPara, offset} = body
 
         //Checking if any of feild is missing
         const missing = []
@@ -688,6 +804,10 @@ router.post('/getUsers', async (req, res) => {
         } else {
             missing.push('FirstPara')
             missing.push('SecondPara')
+        }
+
+        if(!offset || !validator.isNumeric(offset.toString())){
+            offset = 0
         }
 
         //If anything missing sending it back to user with error
@@ -702,10 +822,11 @@ router.post('/getUsers', async (req, res) => {
         }
 
         const query = `
-            CALL getUsers("${FirstPara}", "${SecondPara}");
+            CALL getUsers("${FirstPara}", "${SecondPara}", ${Number(offset)});
             SELECT userMail, name, photoLLink FROM TempNames WHERE userMail="${FirstPara}";
             DELETE FROM TempNames WHERE userMail="${FirstPara}";
         `
+        //calling database
         DBProcedure(query, (error, results) => {
             if(error){
                 return res.status(error.status).send(error.response)
@@ -732,8 +853,6 @@ router.post('/rejectFriendRequest', async (req, res) => {
 
         let { UserEmail, FriendEmail, Pword} = body
 
-        //******  what is pword so I can put varification on it */
-
         //Checking if any of feild is missing
         const missing = []
         if(!UserEmail || UserEmail == '' || !validator.isEmail(UserEmail)){
@@ -757,6 +876,9 @@ router.post('/rejectFriendRequest', async (req, res) => {
             })
         }
 
+        //bcrypting password
+        Pword = await bcryptPass(Pword)
+        //calling database
         const query = `CALL RejectFriendRequest("${UserEmail}","${FriendEmail}","${Pword}",@status, @NotiToakn, @message); SELECT @status, @NotiToakn, @message;`
         DBProcedure(query, (error, results) => {
             if(error){
@@ -802,8 +924,6 @@ router.post('/removeFriend', async (req, res) => {
 
         let { UserEmail, FriendEmail, Pword} = body
 
-        //******  what is pword so I can put varification on it */
-
         //Checking if any of feild is missing
         const missing = []
         if(!UserEmail || UserEmail == '' || !validator.isEmail(UserEmail)){
@@ -827,17 +947,20 @@ router.post('/removeFriend', async (req, res) => {
             })
         }
 
+        //bcrypting password
+        Pword = await bcryptPass(Pword)
+        //calling database
         const query = `CALL RemoveFriend("${UserEmail}","${FriendEmail}","${Pword}",@status, @NotiToakn, @message); SELECT @status, @NotiToakn, @message;`
         DBProcedure(query, (error, results) => {
             if(error){
                 return res.status(error.status).send(error.response)
             }
 
-            //console.log(results)
             res.send({ 
                 status:results[1][0]['@status'],
             })
 
+            //firebase notificaiton
             if(results[1][0]['@status'] == 1 && results[1][0]['@message'] && results[1][0]['@NotiToakn']){
                 // ****************************** 
                 //  Firebase Notification
@@ -871,8 +994,6 @@ router.post('/removeUser', async (req, res) => {
 
         let { UserEmail, Pword} = body
 
-        //******  what is pword so I can put varification on it */
-
         //Checking if any of feild is missing
         const missing = []
         if(!UserEmail || UserEmail == '' || !validator.isEmail(UserEmail)){
@@ -893,6 +1014,10 @@ router.post('/removeUser', async (req, res) => {
             })
         }
 
+        //bcrypting password
+        Pword = await bcryptPass(Pword)
+
+        //calling database
         const query = `CALL RemoveUser("${UserEmail}", "${Pword}", @status); SELECT @status;`
         DBProcedure(query, (error, results) => {
             if(error){
@@ -965,6 +1090,7 @@ router.post('/UpdateUser', imageUpload, async (req, res) => {
 
         //resize image
       	//req.file.buffer = await compressImage(req.file.buffer, 200, 200)
+
         /* Uplading to bucket S3 */
         const [s3data, error] = await upload_to_S3(req.file, false)
         if(error){
@@ -977,9 +1103,13 @@ router.post('/UpdateUser', imageUpload, async (req, res) => {
         }
         const userNewPhoto = s3data.Location
 
+        //bcrypting password
+        pWord = await bcryptPass(pWord)
+        //calling database
         const query = `CALL UpdateUser("${name}","${userNewEmail}","${userNewPhoto}","${userNewPhone}", "${userNewName}", "${userOldEmail}", "${userNewPassword}", ${userNewCountryCode}, "${pWord}", @status);`
         DBProcedure(query, (error, results) => {
             if(error){
+                //deleteing from bucket if any error occur
                 delete_from_S3(s3data.Key)
                 return res.status(error.status).send(error.response)
             }
@@ -1025,6 +1155,9 @@ router.post('/getUserProfile', async (req, res) => {
             })
         }
 
+        //bcrypting password
+        pWord = await bcryptPass(pWord)
+        //calling database
         const query = `CALL GetUserProfile("${UserSingUpId}", "${pWord}", @status, @PhoneNumber, @country, @photo, @emailId, @name); SELECT @status, @status, @PhoneNumber, @country, @photo, @emailId, @name;`
         DBProcedure(query, (error, results) => {
             if(error){
@@ -1080,6 +1213,8 @@ router.post('/getAnalyticsData', async (req, res) => {
             })
         }
 
+        //bcrypting password
+        Pword = await bcryptPass(Pword)
         const query = `
             CALL GetAnalyticsData("${StartDate}", "${Endate}", ${Pword});
             Select * from TempAnalyticsData

@@ -1,5 +1,10 @@
 const AWS =require('aws-sdk')
 
+//uploading image to s3 and retruning promise
+//if success
+//return [error, null]
+//if error
+//return [null, result]
 const upload_to_S3 = async (file, post) => {
 
     let s3

@@ -1,15 +1,30 @@
 const multer = require('multer')
 const path = require('path')
 
+// parse the file recived in form data
+
+
+/****************************************
+ *              *
+ *             * *
+ *  `         * ! *
+ *           *  !  *
+ *          *   !   *
+ *         *    !    *
+ *        *************
+    The key name of image must be "image"
+****************************************/
+
 const imageUpload  = multer({
-    // storage: storage,
-//    limits:{fileSize: 1000000},
+    //limit the size of image
+    //limits:{fileSize: 1000000},
     fileFilter: function(req, file, cb){
         checkFileType(file, cb, req)
     }
 }).single('image') //this is name attribute of input in from where file is uploaded
 
-
+//checking file type
+//if error error is stored in req.imageUploadError
 function checkFileType(file, cb, req){
     // allowed exte
     const fileTypes = /image|jpeg|jpg|png|gif/
