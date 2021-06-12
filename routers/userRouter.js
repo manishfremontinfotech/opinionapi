@@ -61,7 +61,7 @@ router.post('/addEmail', async (req, res) => {
         pWord = await bcryptPass(pWord)
 
         //calling database
-        const query = `CALL AddEmail("${UserEmail}","${pWord}",@status, "Link"); SELECT @status;`
+        const query = `CALL AddEmail("${UserEmail}","${pWord}",@status, "${LINK}"); SELECT @status;`
         DBProcedure(query, (error, results) => {
             if(error){
                 return res.status(error.status).send(error.response)
@@ -765,7 +765,7 @@ router.post('/getUserFriends', async (req, res) => {
         Pword = await bcryptPass(Pword)
         const query = `
             CALL GetUserFriends("${UserEmail}", "${Pword}");
-            SELECT userMail, FriendEmailId, FriendName, FriendPhotoLink, FriendRequestEmailId, FriendRequestName, FriendRequestPhotoLink FROM TempFriendList WHERE userMail="${UserEmail}";
+            SELECT userMail, FriendEmailId, FriendName, FriendPhotoLink, FriendRequestEmailId, FriendRequestName, FriendRequestPhotoLink, Sent_Recieved FROM TempFriendList WHERE userMail="${UserEmail}";
             DELETE FROM TempFriendList WHERE userMail="${UserEmail}";
         `
         //calling database
@@ -823,7 +823,7 @@ router.post('/getUsers', async (req, res) => {
 
         const query = `
             CALL getUsers("${FirstPara}", "${SecondPara}", ${Number(offset)});
-            SELECT userMail, name, photoLLink FROM TempNames WHERE userMail="${FirstPara}";
+            SELECT userMail, name, photoLink FROM TempNames WHERE userMail="${FirstPara}";
             DELETE FROM TempNames WHERE userMail="${FirstPara}";
         `
         //calling database

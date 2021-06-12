@@ -10,6 +10,7 @@ const SES_CONFIG = {
 const AWS_SES = new AWS.SES(SES_CONFIG);
 
 let sendEmail = (recipientEmail, LINK) => {
+	console.log(recipientEmail, LINK)
     let params = {
       Source: process.env.AWS_SES_EMAIL,
       Destination: {
