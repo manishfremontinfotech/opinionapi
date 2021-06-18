@@ -662,6 +662,7 @@ router.post('/getResponseForAllPostsOfUser', async (req, res) => {
                     status:results[1][0]['@status'],
                 })
             }
+	    console.log(results)
             res.send({ 
                 status:results[1][0]['@status'],
                 post:results[2],
@@ -822,19 +823,19 @@ router.post('/getUsers', async (req, res) => {
         }
 
         const query = `
-            CALL getUsers("${FirstPara}", "${SecondPara}", ${Number(offset)});
-            SELECT userMail, name, photoLink FROM TempNames WHERE userMail="${FirstPara}";
-            DELETE FROM TempNames WHERE userMail="${FirstPara}";
+            CALL getUsers("${FirstPara}", ${Number(offset)});
+            SELECT userMail, name, photoLLink FROM TempNames;
         `
+	//DELETE FROM TempNames WHERE userMail LIKE "${FirstPara}";
         //calling database
         DBProcedure(query, (error, results) => {
             if(error){
                 return res.status(error.status).send(error.response)
             }
 
-            //console.log(results[1])
+            console.log(results[1])
             res.send({
-                freindsList:results[1]
+                users:results[1]
             })
         })
 
@@ -1217,7 +1218,7 @@ router.post('/getAnalyticsData', async (req, res) => {
         Pword = await bcryptPass(Pword)
         const query = `
             CALL GetAnalyticsData("${StartDate}", "${Endate}", ${Pword});
-            Select * from TempAnalyticsData
+            Select * from TempAnalyticsData;
         `
         DBProcedure(query, (error, results) => {
             if(error){

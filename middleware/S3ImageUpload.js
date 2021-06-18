@@ -46,7 +46,8 @@ const upload_to_S3 = async (file, post) => {
         console.log(params)
         s3.upload(params, (error, data) => {
             if(error){
-                delete s3
+                console.log(error)
+		delete s3
                 return resolve([null, error])
             }
 
