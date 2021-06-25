@@ -366,7 +366,7 @@ const success = `<!doctype html>
                             </tr>
                           </tbody>
                         </table>
-                        <p>Your account is created. You can now login and use the app</p>
+                        
                         <p>Have a nice day</p>
                       </td>
                     </tr>
