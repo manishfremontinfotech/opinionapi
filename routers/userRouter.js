@@ -63,7 +63,7 @@ router.post('/addEmail', async (req, res) => {
         pWord = await bcryptPass(pWord)
 
         //calling database
-        const query = `CALL AddEmail("${UserEmail}","${pWord}",@status, "${LINK}"); SELECT @status;`
+        const query = `CALL AddEmail("${UserEmail}","${pWord}",@status, "${LINK}", @msg); SELECT @status, @msg;`
         DBProcedure(query, (error, results) => {
             if(error){
                 return res.status(error.status).send(error.response)
@@ -74,7 +74,8 @@ router.post('/addEmail', async (req, res) => {
                 sendEmail(UserEmail, LINK)
 
             res.send({
-                status: results[1][0]['@status']
+                status: results[1][0]['@status'],
+                message: results[1][0]['@msg']
             })
 
         })
@@ -183,7 +184,7 @@ router.post('/addUser', imageUpload, async (req, res) => {
         const facebookSignIn = body.facebookSignIn || "NULL"
 
         //calling database
-        const query = `CALL AddUser("${UserEmail}","${UserName}","${Phone}",${CountryCode}, "${Photo}", @status, "${Password}","${pushNotification}","${googleSignIn}", "${facebookSignIn}"); SELECT @status;`
+        const query = `CALL AddUser("${UserEmail}","${UserName}","${Phone}",${CountryCode}, "${Photo}", @status, "${Password}","${pushNotification}","${googleSignIn}", "${facebookSignIn}", @msg); SELECT @status, @msg;`
         DBProcedure(query, (error, results) => {
             if(error){
                 delete_from_S3(s3data.Key, false)
@@ -195,7 +196,8 @@ router.post('/addUser', imageUpload, async (req, res) => {
                 delete_from_S3(s3data.Key, false)
             }
             res.send({
-                status: results[1][0]['@status']
+                status: results[1][0]['@status'],
+                message: results[1][0]['@msg']
             })
 
         })
@@ -1163,10 +1165,17 @@ router.post('/getUserProfile', async (req, res) => {
         //bcrypting password
         pWord = await bcryptPass(pWord)
         //calling database
-        const query = `CALL GetUserProfile("${UserSingUpId}", "${pWord}", @status, @PhoneNumber, @country, @photo, @emailId, @name); SELECT @status, @status, @PhoneNumber, @country, @photo, @emailId, @name;`
+        const query = `CALL GetUserProfile("${UserSingUpId}", "${pWord}", @status, @PhoneNumber, @country, @photo, @emailId, @name, @msg); SELECT @status, @status, @PhoneNumber, @country, @photo, @emailId, @name, @msg;`
         DBProcedure(query, (error, results) => {
             if(error){
                 return res.status(error.status).send(error.response)
+            }
+
+            if(results[1][0]['@status'] != 1){
+                return res.status(404).send({
+                    message: results[1][0]['@msg'],
+                    status:results[1][0]['@status']
+                })
             }
 
             console.log(results)
@@ -1274,7 +1283,7 @@ router.post('/addPushNotificationToken', async (req, res) => {
         pWord = await bcryptPass(pWord)
 
         //calling database
-        const query = `CALL AddPushNotificationToken("${UserEmail}","${pWord}", "${Token}",@status); SELECT @status;`
+        const query = `CALL AddPushNotificationToken("${UserEmail}","${pWord}", "${Token}",@status, @msg); SELECT @status, @msg;`
         console.log(query)
         DBProcedure(query, (error, results) => {
             if(error){
@@ -1283,7 +1292,8 @@ router.post('/addPushNotificationToken', async (req, res) => {
 
 
             res.send({
-                status: results[1][0]['@status']
+                status: results[1][0]['@status'],
+                message: results[1][0]['@msg']
             })
 
         })

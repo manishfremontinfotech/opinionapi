@@ -375,7 +375,7 @@ let sendEmail = (recipientEmail, LINK) => {
                                 <tr>
                                   <td>
                                     <p>Hi there,</p>
-                                    <p>Welcome to opinion app we are happy to have you.</p>
+                                    <p>Welcome to opinion app. We are happy to have you.</p>
                                     <table role="presentation" border="0" cellpadding="0" cellspacing="0" class="btn btn-primary">
                                       <tbody>
                                         <tr>
@@ -391,7 +391,7 @@ let sendEmail = (recipientEmail, LINK) => {
                                         </tr>
                                       </tbody>
                                     </table>
-                                    <p>Verify your email for join us</p>
+                                    <p>Verify your email to join us</p>
                                     <p>Have a nice day</p>
                                   </td>
                                 </tr>
