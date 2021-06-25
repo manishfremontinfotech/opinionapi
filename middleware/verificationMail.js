@@ -33,7 +33,8 @@ let sendEmail = (recipientEmail, LINK) => {
             </head>
             <body>
                 Hello click on verify to verify
-                <a href="${process.env.BASE_URL}/verifyEmail/${LINK}">verify</a>
+                <a href="${process.env.BASE_URL}verifyEmail/${LINK}">verify</a>
+		
             </body>
             </html>`,
           },
