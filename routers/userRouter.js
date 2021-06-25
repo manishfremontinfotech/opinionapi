@@ -27,6 +27,7 @@ const { sendEmail } = require('../middleware/verificationMail')
 const {success, failed} = require('./verificationTemplet')
 //fucntion for bcrytping password
 const bcryptPass = require('../middleware/bcryptPass')
+const { sendPassInEmail } = require('../middleware/sendPassInEmail')
 
 
 router.post('/addEmail', async (req, res) => {
@@ -34,8 +35,7 @@ router.post('/addEmail', async (req, res) => {
         const body = JSON.parse(JSON.stringify(req.body)) 
 
         let { UserEmail, pWord} = body
-        UserEmail = sanitizeHtml(UserEmail)
-
+        
         //check if anything feild missing
         const missing = []
         if(!UserEmail || UserEmail == '' || !validator.isEmail(UserEmail)){
@@ -50,11 +50,13 @@ router.post('/addEmail', async (req, res) => {
             return res.status(400).send({
                 error:{
                     message:'Error/missing feilds',
+                    missing
                 },
                 data:req.body
             })
         }
 
+        UserEmail = sanitizeHtml(UserEmail)
         //generating verifing string
         const LINK = await generateUUID()
         //bcrypting password
@@ -120,9 +122,7 @@ router.post('/addUser', imageUpload, async (req, res) => {
         const body = JSON.parse(JSON.stringify(req.body)) 
 
         let { UserEmail, UserName, Phone, CountryCode, Password} = body
-        UserName = sanitizeHtml(UserName)
-        UserEmail = sanitizeHtml(UserEmail)
-
+        
         //Checking if any of feild is missing
         const missing = []
         if(!UserName || UserName == '' || UserName == 'undefined'){
@@ -147,11 +147,15 @@ router.post('/addUser', imageUpload, async (req, res) => {
             missing.push('pushNotificationToken')
         }
 
+        UserName = sanitizeHtml(UserName)
+        UserEmail = sanitizeHtml(UserEmail)
+
         //If anything missing sending it back to user with error
         if(missing.length){
             return res.status(400).send({
                 error:{
                     message:'Error/missing feilds',
+                    missing
                 },
                 data:req.body
             })
@@ -352,10 +356,6 @@ router.post('/addPost', imageUpload, async (req, res) => {
 
         let { UserEmail , Question, Rating, Comment, Pword, emails} = body
 
-        UserEmail = sanitizeHtml(UserEmail)
-        Question = sanitizeHtml(Question)
-        Comment = sanitizeHtml(Comment)
-
         //Checking if any of feild is missing
         const missing = []
         if(!UserEmail || UserEmail == '' || !validator.isEmail(UserEmail)){
@@ -379,6 +379,10 @@ router.post('/addPost', imageUpload, async (req, res) => {
         if(!Pword || Pword == ''){
             missing.push('Pword')
         }
+
+        UserEmail = sanitizeHtml(UserEmail)
+        Question = sanitizeHtml(Question)
+        Comment = sanitizeHtml(Comment)
         
         //If anything missing sending it back to user with error
         if(missing.length){
@@ -1238,5 +1242,157 @@ router.post('/getAnalyticsData', async (req, res) => {
         res.status(500).send({error:{message:"API internal error, refer console for more information."}})
     }
 })
+
+router.post('/addPushNotificationToken', async (req, res) => {
+    try{
+        const body = JSON.parse(JSON.stringify(req.body)) 
+
+        let { UserEmail, pWord, Token} = body
+        //check if anything feild missing
+        const missing = []
+        if(!UserEmail || UserEmail == '' || !validator.isEmail(UserEmail)){
+            missing.push('UserEmail')
+        }
+        if(!pWord || pWord == '' || pWord == 'undefined'){
+            missing.push('pWord')
+        }
+        if(!Token || Token == '' || Token == 'undefined'){
+            missing.push('Token')
+        }
+
+        //If anything missing sending it back to user with error
+        if(missing.length){
+            return res.status(400).send({
+                error:{
+                    message:'Error/missing feilds',
+                    missing
+                },
+                data:req.body
+            })
+        }
+
+        pWord = await bcryptPass(pWord)
+
+        //calling database
+        const query = `CALL AddPushNotificationToken("${UserEmail}","${pWord}", "${Token}",@status); SELECT @status;`
+        console.log(query)
+        DBProcedure(query, (error, results) => {
+            if(error){
+                return res.status(error.status).send(error.response)
+            }
+
+
+            res.send({
+                status: results[1][0]['@status']
+            })
+
+        })
+    
+    } catch(e) {
+        //Network or internal errors
+        console.log(e)
+        res.status(500).send({error:{message:"API internal error, refer console for more information."}})
+    }
+})
+
+router.post('/changePassword', async (req, res) => {
+    try{
+        const body = JSON.parse(JSON.stringify(req.body)) 
+
+        let { UserEmail, oldPword, NewPword} = body
+
+        //check if anything feild missing
+        const missing = []
+        if(!UserEmail || UserEmail == '' || !validator.isEmail(UserEmail)){
+            missing.push('UserEmail')
+        }
+        if(!oldPword || oldPword == '' || oldPword == 'undefined'){
+            missing.push('oldPword')
+        }
+        if(!NewPword || NewPword == '' || NewPword == 'undefined'){
+            missing.push('NewPword')
+        }
+
+        //If anything missing sending it back to user with error
+        if(missing.length){
+            return res.status(400).send({
+                error:{
+                    message:'Error/missing feilds',
+                    missing
+                },
+                data:req.body
+            })
+        }
+
+        oldPword = await bcryptPass(oldPword)
+        NewPword = await bcryptPass(NewPword)
+
+        //calling database
+        const query = `CALL ChangePassword("${UserEmail}","${oldPword}", "${NewPword}",@success); SELECT @success;`
+        DBProcedure(query, (error, results) => {
+            if(error){
+                return res.status(error.status).send(error.response)
+            }
+
+            res.send({
+                status: results[1][0]['@success']
+            })
+
+        })
+    
+    } catch(e) {
+        //Network or internal errors
+        console.log(e)
+        res.status(500).send({error:{message:"API internal error, refer console for more information."}})
+    }
+})
+
+router.post('/forgotPassword', async (req, res) => {
+    try{
+        const body = JSON.parse(JSON.stringify(req.body)) 
+
+        let { UserEmail} = body
+
+        //check if anything feild missing
+        const missing = []
+        if(!UserEmail || UserEmail == '' || !validator.isEmail(UserEmail)){
+            missing.push('UserEmail')
+        }
+
+        //If anything missing sending it back to user with error
+        if(missing.length){
+            return res.status(400).send({
+                error:{
+                    message:'Error/missing feilds',
+                    missing
+                },
+                data:req.body
+            })
+        }
+
+        //calling database
+        const query = `CALL ForgotPassword("${UserEmail}",@success, @Pword);SELECT @success, @Pword`
+        DBProcedure(query, (error, results) => {
+            if(error){
+                return res.status(error.status).send(error.response)
+            }
+
+            //if user created sending verification mail
+            if(results[1][0]['@success'])
+                sendPassInEmail(UserEmail, results[1][0]['@Pword'])
+
+            res.send({
+                status: results[1][0]['@success']
+            })
+
+        })
+    
+    } catch(e) {
+        //Network or internal errors
+        console.log(e)
+        res.status(500).send({error:{message:"API internal error, refer console for more information."}})
+    }
+})
+
 
 module.exports = router
