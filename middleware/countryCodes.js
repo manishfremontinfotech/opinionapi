@@ -1,471 +1,239 @@
 //List of countery code
 //below number there is also a list in alphabets
 const countryCode = [
-	/*UK*/44,
-/*USA*/1,
-/*Algeria*/213,
-/*Andorra*/376,
-/*Angola*/244,
-/*Anguilla*/1264,
-/*Antigua & Barbuda*/1268,
-/*Argentina*/54,
-/*Armenia*/374,
-/*Aruba*/297,
-/*Australia*/61,
-/*Austria*/43,
-/*Azerbaijan*/994,
-/*Bahamas*/1242,
-/*Bahrain*/973,
-/*Bangladesh*/880,
-/*Barbados*/1246,
-/*Belarus*/375,
-/*Belgium*/32,
-/*Belize*/501,
-/*Benin*/229,
-/*Bermuda*/1441,
-/*Bhutan*/975,
-/*Bolivia*/591,
-/*Bosnia Herzegovina*/387,
-/*Botswana*/267,
-/*Brazil*/55,
-/*Brunei*/673,
-/*Bulgaria*/359,
-/*Burkina Faso*/226,
-/*Burundi*/257,
-/*Cambodia*/855,
-/*Cameroon*/237,
-/*Canada*/1,
-/*Cape Verde Islands*/238,
-/*Cayman Islands*/1345,
-/*Central African Republic*/236,
-/*Chile*/56,
-/*China*/86,
-/*Colombia*/57,
-/*Comoros*/269,
-/*Congo*/242,
-/*Cook Islands*/682,
-/*Costa Rica*/506,
-/*Croatia*/385,
-/*Cuba*/53,
-/*Cyprus North*/90392,
-/*Cyprus South*/357,
-/*Czech Republic*/42,
-/*Denmark*/45,
-/*Djibouti*/253,
-/*Dominica*/1809,
-/*Dominican Republic*/1809,
-/*Ecuador*/593,
-/*Egypt*/20,
-/*El Salvador*/503,
-/*Equatorial Guinea*/240,
-/*Eritrea*/291,
-/*Estonia*/372,
-/*Ethiopia*/251,
-/*Falkland Islands*/500,
-/*Faroe Islands*/298,
-/*Fiji*/679,
-/*Finland*/358,
-/*France*/33,
-/*French Guiana*/594,
-/*French Polynesia*/689,
-/*Gabon*/241,
-/*Gambia*/220,
-/*Georgia*/7880,
-/*Germany*/49,
-/*Ghana*/233,
-/*Gibraltar*/350,
-/*Greece*/30,
-/*Greenland*/299,
-/*Grenada*/1473,
-/*Guadeloupe*/590,
-/*Guam*/671,
-/*Guatemala*/502,
-/*Guinea*/224,
-/*Guinea - Bissau*/245,
-/*Guyana*/592,
-/*Haiti*/509,
-/*Honduras*/504,
-/*Hong Kong*/852,
-/*Hungary*/36,
-/*Iceland*/354,
-/*India*/91,
-/*Indonesia*/62,
-/*Iran*/98,
-/*Iraq*/964,
-/*Ireland*/353,
-/*Israel*/972,
-/*Italy*/39,
-/*Jamaica*/1876,
-/*Japan*/81,
-/*Jordan*/962,
-/*Kazakhstan*/7,
-/*Kenya*/254,
-/*Kiribati*/686,
-/*Korea North*/850,
-/*Korea South*/82,
-/*Kuwait*/965,
-/*Kyrgyzstan*/996,
-/*Laos*/856,
-/*Latvia*/371,
-/*Lebanon*/961,
-/*Lesotho*/266,
-/*Liberia*/231,
-/*Libya*/218,
-/*Liechtenstein*/417,
-/*Lithuania*/370,
-/*Luxembourg*/352,
-/*Macao*/853,
-/*Macedonia*/389,
-/*Madagascar*/261,
-/*Malawi*/265,
-/*Malaysia*/60,
-/*Maldives*/960,
-/*Mali*/223,
-/*Malta*/356,
-/*Marshall Islands*/692,
-/*Martinique*/596,
-/*Mauritania*/222,
-/*Mayotte*/269,
-/*Mexico*/52,
-/*Micronesia*/691,
-/*Moldova*/373,
-/*Monaco*/377,
-/*Mongolia*/976,
-/*Montserrat*/1664,
-/*Morocco*/212,
-/*Mozambique*/258,
-/*Myanmar*/95,
-/*Namibia*/264,
-/*Nauru*/674,
-/*Nepal*/977,
-/*Netherlands*/31,
-/*New Caledonia*/687,
-/*New Zealand*/64,
-/*Nicaragua*/505,
-/*Niger*/227,
-/*Nigeria*/234,
-/*Niue*/683,
-/*Norfolk Islands*/672,
-/*Northern Marianas*/670,
-/*Norway*/47,
-/*Oman*/968,
-/*Palau*/680,
-/*Panama*/507,
-/*Papua New Guinea*/675,
-/*Paraguay*/595,
-/*Peru*/51,
-/*Philippines*/63,
-/*Poland*/48,
-/*Portugal*/351,
-/*Puerto Rico*/1787,
-/*Qatar*/974,
-/*Reunion*/262,
-/*Romania*/40,
-/*Russia*/7,
-/*Rwanda*/250,
-/*San Marino*/378,
-/*Sao Tome & Principe*/239,
-/*Saudi Arabia*/966,
-/*Senegal*/221,
-/*Serbia*/381,
-/*Seychelles*/248,
-/*Sierra Leone*/232,
-/*Singapore*/65,
-/*Slovak Republic*/421,
-/*Slovenia*/386,
-/*Solomon Islands*/677,
-/*Somalia*/252,
-/*South Africa*/27,
-/*Spain*/34,
-/*Sri Lanka*/94,
-/*St. Helena*/290,
-/*St. Kitts*/1869,
-/*St. Lucia*/1758,
-/*Sudan*/249,
-/*Suriname*/597,
-/*Swaziland*/268,
-/*Sweden*/46,
-/*Switzerland*/41,
-/*Syria*/963,
-/*Taiwan*/886,
-/*Tajikstan*/7,
-/*Thailand*/66,
-/*Togo*/228,
-/*Tonga*/676,
-/*Trinidad & Tobago*/1868,
-/*Tunisia*/216,
-/*Turkey*/90,
-/*Turkmenistan*/7,
-/*Turkmenistan*/993,
-/*Turks & Caicos Islands*/1649,
-/*Tuvalu*/688,
-/*Uganda*/256,
-/*Ukraine*/380,
-/*United Arab Emirates*/971,
-/*Uruguay*/598,
-/*Uzbekistan*/7,
-/*Vanuatu*/678,
-/*Vatican City*/379,
-/*Venezuela*/58,
-/*Vietnam*/84,
-/*Virgin Islands - British*/1284,
-/*Virgin Islands - US*/1340,
-/*Wallis & Futuna*/681,
-/*Yemen*/969,
-/*Yemen*/967,
-/*Zambia*/260,
-/*Zimbabwe*/263
+	376,    //'AD''ANDORRA'
+	971,    //'AE''UNITED ARAB EMIRATES'
+	93,     //'AF''AFGHANISTAN'
+	1268,   //'AG''ANTIGUA AND BARBUDA'
+	1264,   //'AI''ANGUILLA'
+	355,    //'AL''ALBANIA'
+	374,    //'AM''ARMENIA'
+	599,    //'AN''NETHERLANDS ANTILLES'
+	244,    //'AO''ANGOLA'
+	672,    //'AQ''ANTARCTICA'
+	54,     //'AR''ARGENTINA'
+	1684,   //'AS''AMERICAN SAMOA'
+	43,     //'AT''AUSTRIA'
+	61,     //'AU''AUSTRALIA'
+	297,    //'AW''ARUBA'
+	994,    //'AZ''AZERBAIJAN'
+	387,    //'BA''BOSNIA AND HERZEGOVINA'
+	1246,   //'BB''BARBADOS'
+	880,    //'BD''BANGLADESH'
+	32,     //'BE''BELGIUM'
+	226,    //'BF''BURKINA FASO'
+	359,    //'BG''BULGARIA'
+	973,    //'BH''BAHRAIN'
+	257,    //'BI''BURUNDI'
+	229,    //'BJ''BENIN'
+	590,    //'BL''SAINT BARTHELEMY'
+	1441,   //'BM''BERMUDA'
+	673,    //'BN''BRUNEI DARUSSALAM'
+	591,    //'BO''BOLIVIA'
+	55,     //'BR''BRAZIL'
+	1242,   //'BS''BAHAMAS'
+	975,    //'BT''BHUTAN'
+	267,    //'BW''BOTSWANA'
+	375,    //'BY''BELARUS'
+	501,    //'BZ''BELIZE'
+	1,  //'CA''CANADA'
+	61,     //'CC''COCOS (KEELING) ISLANDS'
+	243,    //'CD''CONGO, THE DEMOCRATIC REPUBLIC OF THE'
+	236,    //'CF''CENTRAL AFRICAN REPUBLIC'
+	242,    //'CG''CONGO'
+	41,     //'CH''SWITZERLAND'
+	225,    //'CI''COTE D IVOIRE'
+	682,    //'CK''COOK ISLANDS'
+	56,     //'CL''CHILE'
+	237,    //'CM''CAMEROON'
+	86,     //'CN''CHINA'
+	57,     //'CO''COLOMBIA'
+	506,    //'CR''COSTA RICA'
+	53,     //'CU''CUBA'
+	238,    //'CV''CAPE VERDE'
+	61,     //'CX''CHRISTMAS ISLAND'
+	357,    //'CY''CYPRUS'
+	420,    //'CZ''CZECH REPUBLIC'
+	49,     //'DE''GERMANY'
+	253,    //'DJ''DJIBOUTI'
+	45,     //'DK''DENMARK'
+	1767,   //'DM''DOMINICA'
+	1809,   //'DO''DOMINICAN REPUBLIC'
+	213,    //'DZ''ALGERIA'
+	593,    //'EC''ECUADOR'
+	372,    //'EE''ESTONIA'
+	20,     //'EG''EGYPT'
+	291,    //'ER''ERITREA'
+	34,     //'ES''SPAIN'
+	251,    //'ET''ETHIOPIA'
+	358,    //'FI''FINLAND'
+	679,    //'FJ''FIJI'
+	500,    //'FK''FALKLAND ISLANDS (MALVINAS)
+	691,    //'FM''MICRONESIA, FEDERATED STATES OF'
+	298,    //'FO''FAROE ISLANDS'
+	33,     //'FR''FRANCE'
+	241,    //'GA''GABON'
+	44,     //'GB''UNITED KINGDOM'
+	1473,   //'GD''GRENADA'
+	995,    //'GE''GEORGIA'
+	233,    //'GH''GHANA'
+	350,    //'GI''GIBRALTAR'
+	299,    //'GL''GREENLAND'
+	220,    //'GM''GAMBIA'
+	224,    //'GN''GUINEA'
+	240,    //'GQ''EQUATORIAL GUINEA'
+	30,     //'GR''GREECE'
+	502,    //'GT''GUATEMALA'
+	1671,   //'GU''GUAM'
+	245,    //'GW''GUINEA-BISSAU'
+	592,    //'GY''GUYANA'
+	852,    //'HK''HONG KONG'
+	504,    //'HN''HONDURAS'
+	385,    //'HR''CROATIA'
+	509,    //'HT''HAITI'
+	36,     //'HU''HUNGARY'
+	62,     //'ID''INDONESIA'
+	353,    //'IE''IRELAND'
+	972,    //'IL''ISRAEL'
+	44,     //'IM''ISLE OF MAN'
+	91,     //'IN''INDIA'
+	964,    //'IQ''IRAQ'
+	98,     //'IR''IRAN, ISLAMIC REPUBLIC OF'
+	354,    //'IS''ICELAND'
+	39,     //'IT''ITALY'
+	1876,   //'JM''JAMAICA'
+	962,    //'JO''JORDAN'
+	81,     //'JP''JAPAN'
+	254,    //'KE''KENYA'
+	996,    //'KG''KYRGYZSTAN'
+	855,    //'KH''CAMBODIA'
+	686,    //'KI''KIRIBATI'
+	269,    //'KM''COMOROS'
+	1869,   //'KN''SAINT KITTS AND NEVIS'
+	850,    //'KP''KOREA DEMOCRATIC PEOPLES REPUBLIC OF'
+	82,     //'KR''KOREA REPUBLIC OF'
+	965,    //'KW''KUWAIT'
+	1345,   //'KY''CAYMAN ISLANDS'
+	7,  //'KZ''KAZAKSTAN'
+	856,    //'LA''LAO PEOPLES DEMOCRATIC REPUBLIC'
+	961,    //'LB''LEBANON'
+	1758,   //'LC''SAINT LUCIA'
+	423,    //'LI''LIECHTENSTEIN'
+	94,     //'LK''SRI LANKA'
+	231,    //'LR''LIBERIA'
+	266,    //'LS''LESOTHO'
+	370,    //'LT''LITHUANIA'
+	352,    //'LU''LUXEMBOURG'
+	371,    //'LV''LATVIA'
+	218,    //'LY''LIBYAN ARAB JAMAHIRIYA'
+	212,    //'MA''MOROCCO'
+	377,    //'MC''MONACO'
+	373,    //'MD''MOLDOVA, REPUBLIC OF'
+	382,    //'ME''MONTENEGRO'
+	1599,   //'MF''SAINT MARTIN'
+	261,    //'MG''MADAGASCAR'
+	692,    //'MH''MARSHALL ISLANDS'
+	389,    //'MK''MACEDONIA, THE FORMER YUGOSLAV REPUBLIC OF'
+	223,    //'ML''MALI'
+	95,     //'MM''MYANMAR'
+	976,    //'MN''MONGOLIA'
+	853,    //'MO''MACAU'
+	1670,   //'MP''NORTHERN MARIANA ISLANDS'
+	222,    //'MR''MAURITANIA'
+	1664,   //'MS''MONTSERRAT'
+	356,    //'MT''MALTA'
+	230,    //'MU''MAURITIUS'
+	960,    //'MV''MALDIVES'
+	265,    //'MW''MALAWI'
+	52,     //'MX''MEXICO'
+	60,     //'MY''MALAYSIA'
+	258,    //'MZ''MOZAMBIQUE'
+	264,    //'NA''NAMIBIA'
+	687,    //'NC''NEW CALEDONIA'
+	227,    //'NE''NIGER'
+	234,    //'NG''NIGERIA'
+	505,    //'NI''NICARAGUA'
+	31,     //'NL''NETHERLANDS'
+	47,     //'NO''NORWAY'
+	977,    //'NP''NEPAL'
+	674,    //'NR''NAURU'
+	683,    //'NU''NIUE'
+	64,     //'NZ''NEW ZEALAND'
+	968,    //'OM''OMAN'
+	507,    //'PA''PANAMA'
+	51,     //'PE''PERU'
+	689,    //'PF''FRENCH POLYNESIA'
+	675,    //'PG''PAPUA NEW GUINEA'
+	63,     //'PH''PHILIPPINES'
+	92,     //'PK''PAKISTAN'
+	48,     //'PL''POLAND'
+	508,    //'PM''SAINT PIERRE AND MIQUELON'
+	870,    //'PN''PITCAIRN'
+	1,  //'PR''PUERTO RICO'
+	351,    //'PT''PORTUGAL'
+	680,    //'PW''PALAU'
+	595,    //'PY''PARAGUAY'
+	974,    //'QA''QATAR'
+	40,     //'RO''ROMANIA'
+	381,    //'RS''SERBIA'
+	7,  //'RU''RUSSIAN FEDERATION'
+	250,    //'RW''RWANDA'
+	966,    //'SA''SAUDI ARABIA'
+	677,    //'SB''SOLOMON ISLANDS'
+	248,    //'SC''SEYCHELLES'
+	249,    //'SD''SUDAN'
+	46,     //'SE''SWEDEN'
+	65,     //'SG''SINGAPORE'
+	290,    //'SH''SAINT HELENA'
+	386,    //'SI''SLOVENIA'
+	421,    //'SK''SLOVAKIA'
+	232,    //'SL''SIERRA LEONE'
+	378,    //'SM''SAN MARINO'
+	221,    //'SN''SENEGAL'
+	252,    //'SO''SOMALIA'
+	597,    //'SR''SURINAME'
+	239,    //'ST''SAO TOME AND PRINCIPE'
+	503,    //'SV''EL SALVADOR'
+	963,    //'SY''SYRIAN ARAB REPUBLIC'
+	268,    //'SZ''SWAZILAND'
+	1649,   //'TC''TURKS AND CAICOS ISLANDS'
+	235,    //'TD''CHAD'
+	228,    //'TG''TOGO'
+	66,     //'TH''THAILAND'
+	992,    //'TJ''TAJIKISTAN'
+	690,    //'TK''TOKELAU'
+	670,    //'TL''TIMOR-LESTE'
+	993,    //'TM''TURKMENISTAN'
+	216,    //'TN''TUNISIA'
+	676,    //'TO''TONGA'
+	90,     //'TR''TURKEY'
+	1868,   //'TT''TRINIDAD AND TOBAGO'
+	688,    //'TV''TUVALU'
+	886,    //'TW''TAIWAN, PROVINCE OF CHINA'
+	255,    //'TZ''TANZANIA, UNITED REPUBLIC OF'
+	380,    //'UA''UKRAINE'
+	256,    //'UG''UGANDA'
+	1,  //'US''UNITED STATES'
+	598,    //'UY''URUGUAY'
+	998,    //'UZ''UZBEKISTAN'
+	39,     //'VA''HOLY SEE (VATICAN CITY STATE)
+	1784,   //'VC''SAINT VINCENT AND THE GRENADINES'
+	58,     //'VE''VENEZUELA'
+	1284,   //'VG''VIRGIN ISLANDS, BRITISH'
+	1340,   //'VI''VIRGIN ISLANDS, U.S.
+	84,     //'VN''VIET NAM'
+	678,    //'VU''VANUATU'
+	681,    //'WF''WALLIS AND FUTUNA'
+	685,    //'WS''SAMOA'
+	381,    //'XK''KOSOVO'
+	967,    //'YE''YEMEN'
+	262,    //'YT''MAYOTTE'
+	27,     //'ZA''SOUTH AFRICA'
+	260,    //'ZM''ZAMBIA'
+	263   //'ZW''ZIMBABWE'
 ]
 
-
-// const countryCode = [
-// 	'AF', //'Afghanistan',
-// 	'AX', //'Aland Islands',
-// 	'AL', //'Albania',
-// 	'DZ', //'Algeria',
-// 	'AS', //'American Samoa',
-// 	'AD', //'Andorra',
-// 	'AO', //'Angola',
-// 	'AI', //'Anguilla',
-// 	'AQ', //'Antarctica',
-// 	'AG', //'Antigua And Barbuda',
-// 	'AR', //'Argentina',
-// 	'AM', //'Armenia',
-// 	'AW', //'Aruba',
-// 	'AU', //'Australia',
-// 	'AT', //'Austria',
-// 	'AZ', //'Azerbaijan',
-// 	'BS', //'Bahamas',
-// 	'BH', //'Bahrain',
-// 	'BD', //'Bangladesh',
-// 	'BB', //'Barbados',
-// 	'BY', //'Belarus',
-// 	'BE', //'Belgium',
-// 	'BZ', //'Belize',
-// 	'BJ', //'Benin',
-// 	'BM', //'Bermuda',
-// 	'BT', //'Bhutan',
-// 	'BO', //'Bolivia',
-// 	'BA', //'Bosnia And Herzegovina',
-// 	'BW', //'Botswana',
-// 	'BV', //'Bouvet Island',
-// 	'BR', //'Brazil',
-// 	'IO', //'British Indian Ocean Territory',
-// 	'BN', //'Brunei Darussalam',
-// 	'BG', //'Bulgaria',
-// 	'BF', //'Burkina Faso',
-// 	'BI', //'Burundi',
-// 	'KH', //'Cambodia',
-// 	'CM', //'Cameroon',
-// 	'CA', //'Canada',
-// 	'CV', //'Cape Verde',
-// 	'KY', //'Cayman Islands',
-// 	'CF', //'Central African Republic',
-// 	'TD', //'Chad',
-// 	'CL', //'Chile',
-// 	'CN', //'China',
-// 	'CX', //'Christmas Island',
-// 	'CC', //'Cocos (Keeling) Islands',
-// 	'CO', //'Colombia',
-// 	'KM', //'Comoros',
-// 	'CG', //'Congo',
-// 	'CD', //'Congo, Democratic Republic',
-// 	'CK', //'Cook Islands',
-// 	'CR', //'Costa Rica',
-// 	'CI', //'Cote D\'Ivoire',
-// 	'HR', //'Croatia',
-// 	'CU', //'Cuba',
-// 	'CY', //'Cyprus',
-// 	'CZ', //'Czech Republic',
-// 	'DK', //'Denmark',
-// 	'DJ', //'Djibouti',
-// 	'DM', //'Dominica',
-// 	'DO', //'Dominican Republic',
-// 	'EC', //'Ecuador',
-// 	'EG', //'Egypt',
-// 	'SV', //'El Salvador',
-// 	'GQ', //'Equatorial Guinea',
-// 	'ER', //'Eritrea',
-// 	'EE', //'Estonia',
-// 	'ET', //'Ethiopia',
-// 	'FK', //'Falkland Islands (Malvinas)',
-// 	'FO', //'Faroe Islands',
-// 	'FJ', //'Fiji',
-// 	'FI', //'Finland',
-// 	'FR', //'France',
-// 	'GF', //'French Guiana',
-// 	'PF', //'French Polynesia',
-// 	'TF', //'French Southern Territories',
-// 	'GA', //'Gabon',
-// 	'GM', //'Gambia',
-// 	'GE', //'Georgia',
-// 	'DE', //'Germany',
-// 	'GH', //'Ghana',
-// 	'GI', //'Gibraltar',
-// 	'GR', //'Greece',
-// 	'GL', //'Greenland',
-// 	'GD', //'Grenada',
-// 	'GP', //'Guadeloupe',
-// 	'GU', //'Guam',
-// 	'GT', //'Guatemala',
-// 	'GG', //'Guernsey',
-// 	'GN', //'Guinea',
-// 	'GW', //'Guinea-Bissau',
-// 	'GY', //'Guyana',
-// 	'HT', //'Haiti',
-// 	'HM', //'Heard Island & Mcdonald Islands',
-// 	'VA', //'Holy See (Vatican City State)',
-// 	'HN', //'Honduras',
-// 	'HK', //'Hong Kong',
-// 	'HU', //'Hungary',
-// 	'IS', //'Iceland',
-// 	'IN', //'India',
-// 	'ID', //'Indonesia',
-// 	'IR', //'Iran, Islamic Republic Of',
-// 	'IQ', //'Iraq',
-// 	'IE', //'Ireland',
-// 	'IM', //'Isle Of Man',
-// 	'IL', //'Israel',
-// 	'IT', //'Italy',
-// 	'JM', //'Jamaica',
-// 	'JP', //'Japan',
-// 	'JE', //'Jersey',
-// 	'JO', //'Jordan',
-// 	'KZ', //'Kazakhstan',
-// 	'KE', //'Kenya',
-// 	'KI', //'Kiribati',
-// 	'KR', //'Korea',
-// 	'KW', //'Kuwait',
-// 	'KG', //'Kyrgyzstan',
-// 	'LA', //'Lao People\'s Democratic Republic',
-// 	'LV', //'Latvia',
-// 	'LB', //'Lebanon',
-// 	'LS', //'Lesotho',
-// 	'LR', //'Liberia',
-// 	'LY', //'Libyan Arab Jamahiriya',
-// 	'LI', //'Liechtenstein',
-// 	'LT', //'Lithuania',
-// 	'LU', //'Luxembourg',
-// 	'MO', //'Macao',
-// 	'MK', //'Macedonia',
-// 	'MG', //'Madagascar',
-// 	'MW', //'Malawi',
-// 	'MY', //'Malaysia',
-// 	'MV', //'Maldives',
-// 	'ML', //'Mali',
-// 	'MT', //'Malta',
-// 	'MH', //'Marshall Islands',
-// 	'MQ', //'Martinique',
-// 	'MR', //'Mauritania',
-// 	'MU', //'Mauritius',
-// 	'YT', //'Mayotte',
-// 	'MX', //'Mexico',
-// 	'FM', //'Micronesia, Federated States Of',
-// 	'MD', //'Moldova',
-// 	'MC', //'Monaco',
-// 	'MN', //'Mongolia',
-// 	'ME', //'Montenegro',
-// 	'MS', //'Montserrat',
-// 	'MA', //'Morocco',
-// 	'MZ', //'Mozambique',
-// 	'MM', //'Myanmar',
-// 	'NA', //'Namibia',
-// 	'NR', //'Nauru',
-// 	'NP', //'Nepal',
-// 	'NL', //'Netherlands',
-// 	'AN', //'Netherlands Antilles',
-// 	'NC', //'New Caledonia',
-// 	'NZ', //'New Zealand',
-// 	'NI', //'Nicaragua',
-// 	'NE', //'Niger',
-// 	'NG', //'Nigeria',
-// 	'NU', //'Niue',
-// 	'NF', //'Norfolk Island',
-// 	'MP', //'Northern Mariana Islands',
-// 	'NO', //'Norway',
-// 	'OM', //'Oman',
-// 	'PK', //'Pakistan',
-// 	'PW', //'Palau',
-// 	'PS', //'Palestinian Territory, Occupied',
-// 	'PA', //'Panama',
-// 	'PG', //'Papua New Guinea',
-// 	'PY', //'Paraguay',
-// 	'PE', //'Peru',
-// 	'PH', //'Philippines',
-// 	'PN', //'Pitcairn',
-// 	'PL', //'Poland',
-// 	'PT', //'Portugal',
-// 	'PR', //'Puerto Rico',
-// 	'QA', //'Qatar',
-// 	'RE', //'Reunion',
-// 	'RO', //'Romania',
-// 	'RU', //'Russian Federation',
-// 	'RW', //'Rwanda',
-// 	'BL', //'Saint Barthelemy',
-// 	'SH', //'Saint Helena',
-// 	'KN', //'Saint Kitts And Nevis',
-// 	'LC', //'Saint Lucia',
-// 	'MF', //'Saint Martin',
-// 	'PM', //'Saint Pierre And Miquelon',
-// 	'VC', //'Saint Vincent And Grenadines',
-// 	'WS', //'Samoa',
-// 	'SM', //'San Marino',
-// 	'ST', //'Sao Tome And Principe',
-// 	'SA', //'Saudi Arabia',
-// 	'SN', //'Senegal',
-// 	'RS', //'Serbia',
-// 	'SC', //'Seychelles',
-// 	'SL', //'Sierra Leone',
-// 	'SG', //'Singapore',
-// 	'SK', //'Slovakia',
-// 	'SI', //'Slovenia',
-// 	'SB', //'Solomon Islands',
-// 	'SO', //'Somalia',
-// 	'ZA', //'South Africa',
-// 	'GS', //'South Georgia And Sandwich Isl.',
-// 	'ES', //'Spain',
-// 	'LK', //'Sri Lanka',
-// 	'SD', //'Sudan',
-// 	'SR', //'Suriname',
-// 	'SJ', //'Svalbard And Jan Mayen',
-// 	'SZ', //'Swaziland',
-// 	'SE', //'Sweden',
-// 	'CH', //'Switzerland',
-// 	'SY', //'Syrian Arab Republic',
-// 	'TW', //'Taiwan',
-// 	'TJ', //'Tajikistan',
-// 	'TZ', //'Tanzania',
-// 	'TH', //'Thailand',
-// 	'TL', //'Timor-Leste',
-// 	'TG', //'Togo',
-// 	'TK', //'Tokelau',
-// 	'TO', //'Tonga',
-// 	'TT', //'Trinidad And Tobago',
-// 	'TN', //'Tunisia',
-// 	'TR', //'Turkey',
-// 	'TM', //'Turkmenistan',
-// 	'TC', //'Turks And Caicos Islands',
-// 	'TV', //'Tuvalu',
-// 	'UG', //'Uganda',
-// 	'UA', //'Ukraine',
-// 	'AE', //'United Arab Emirates',
-// 	'GB', //'United Kingdom',
-// 	'US', //'United States',
-// 	'UM', //'United States Outlying Islands',
-// 	'UY', //'Uruguay',
-// 	'UZ', //'Uzbekistan',
-// 	'VU', //'Vanuatu',
-// 	'VE', //'Venezuela',
-// 	'VN', //'Viet Nam',
-// 	'VG', //'Virgin Islands, British',
-// 	'VI', //'Virgin Islands, U.S.',
-// 	'WF', //'Wallis And Futuna',
-// 	'EH', //'Western Sahara',
-// 	'YE', //'Yemen',
-// 	'ZM', //'Zambia',
-// 	'ZW' //'Zimbabwe'
-// ]
-
 module.exports = countryCode
+
 
 

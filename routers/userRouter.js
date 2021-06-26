@@ -1185,7 +1185,8 @@ router.post('/getUserProfile', async (req, res) => {
                 country:results[1][0]['@country'],
                 emailId:results[1][0]['@emailId'],
                 name:results[1][0]['@name'],
-                photo:results[1][0]['@photo']
+                photo:results[1][0]['@photo'],
+		message: results[1][0]['@msg']
             })
         })
 

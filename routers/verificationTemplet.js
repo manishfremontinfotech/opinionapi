@@ -771,7 +771,7 @@ const failed = `<!doctype html>
                             </tr>
                           </tbody>
                         </table>
-                        <p>You can now login and use our app</p>
+                      
                         <p>Have a nice day</p>
                       </td>
                     </tr>
