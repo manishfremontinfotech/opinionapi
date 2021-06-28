@@ -1170,13 +1170,14 @@ router.post('/getUserProfile', async (req, res) => {
             if(error){
                 return res.status(error.status).send(error.response)
             }
-
+	
+	 /*
             if(results[1][0]['@status'] != 1){
                 return res.status(404).send({
                     message: results[1][0]['@msg'],
                     status:results[1][0]['@status']
                 })
-            }
+            } */
 
             console.log(results)
             res.send({
