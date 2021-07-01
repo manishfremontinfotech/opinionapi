@@ -67,6 +67,7 @@ router.post('/addEmail', async (req, res) => {
         //calling database
         const query = `CALL AddEmail(?, ?, @status, ?, @msg); SELECT @status, @msg;`
         const data = [UserEmail.toString(), pWord.toString(), LINK.toString()]
+
         DBProcedure(query, data, async (error, results) => {
             if(error){
                 return res.status(error.status).send(error.response)
@@ -101,12 +102,14 @@ router.get('/verifyEmail/:link', async (req, res) => {
         }
 
         //calling database
-        const query = `CALL VerifyEmail("${Link}",@status); SELECT @status;`
-        DBProcedure(query, (error, results) => {
+        const query = `CALL VerifyEmail(?,@status); SELECT @status;`
+        const data = [Link.toString()]
+        DBProcedure(query, data, (error, results) => {
             if(error){
                 return res.send(failed)
             }
 
+            console.log(results)
             if(results[1][0]['@status'] != 1)
                 return res.send(failed)
 
@@ -176,7 +179,7 @@ router.post('/addUser', imageUpload, async (req, res) => {
             return res.status(502).send({
                 error:{
                     message:'Fail to upload image to storage.',
-                    missing,
+                    missing
                 }
             })
         }
@@ -365,6 +368,7 @@ router.post('/addFriendRequest', async (req, res) => {
 router.post('/addPost', imageUpload, async (req, res) => {
     try{
         const body = JSON.parse(JSON.stringify(req.body)) 
+        console.log(req.file)
 
         let { UserEmail , Question, Rating, Comment, Pword, emails} = body
 
@@ -861,7 +865,7 @@ router.post('/getUsers', async (req, res) => {
         }
 
         //bcrypting password
-        pWord = await bcryptPass(Pword)
+        pWord = await bcryptPass(pWord)
 
         const query = `
             CALL getUsers(?, ?, ?, ?, @success, @message);
@@ -1425,7 +1429,7 @@ router.post('/UpdateUser', imageUpload, async (req, res) => {
         //bcrypting password
         pWord = await bcryptPass(pWord)
         //calling database
-        const query = `CALL UpdateUser(?,?,?,?, ?, ?, ?, ?, ?, @status);`
+        const query = `CALL UpdateUser(?,?,?,?, ?, ?, ?, ?, ?, @status);Select @status`
         const data = [name.toString(),userNewEmail.toString(),userNewPhoto.toString(),userNewPhone.toString(), userNewName.toString(), userOldEmail.toString(), userNewPassword.toString(), Number(userNewCountryCode), pWord.toString()]
         
         DBProcedure(query, data, (error, results) => {
@@ -1437,7 +1441,7 @@ router.post('/UpdateUser', imageUpload, async (req, res) => {
 
             //console.log(results)
             res.send({ 
-                status:1,
+                status:results[1][0]['@status'],
             })
         })
 
@@ -1473,6 +1477,7 @@ router.post('/UpdateUserProfilePhoto', imageUpload, async (req, res) => {
             return res.status(400).send({
                 error:{
                     message:'Error/missing feilds',
+                    missing
                 },
                 data:req.body
             })
@@ -1496,7 +1501,7 @@ router.post('/UpdateUserProfilePhoto', imageUpload, async (req, res) => {
         //bcrypting password
         pWord = await bcryptPass(pWord)
         //calling database
-        const query = `CALL UpdateUserProfilePhoto(?,?,? @status);Select @status;`
+        const query = `CALL UpdateUserProfilePhoto(?,?,?, @status);Select @status;`
         const data = [UserEmail.toString(), pWord.toString(), userNewPhoto.toString()]
 
         DBProcedure(query,data, (error, results) => {
@@ -1523,7 +1528,6 @@ router.post('/UpdateUserPhone', async (req, res) => {
     try{
 
         const body = JSON.parse(JSON.stringify(req.body)) 
-
         let { UserEmail, pWord, phone, country} = body
 
         //Checking if any of feild is missing
@@ -1531,9 +1535,6 @@ router.post('/UpdateUserPhone', async (req, res) => {
         
         if(!UserEmail || UserEmail == '' || UserEmail == 'undefined'){
             missing.push('UserEmail')
-        }
-        if(!pWord || pWord == '' || !validator.isEmail(pWord)){
-            missing.push('pWord')
         }
         if(!pWord || pWord == ''){
             missing.push('pWord')
@@ -1551,7 +1552,7 @@ router.post('/UpdateUserPhone', async (req, res) => {
                 error:{
                     message:'Error/missing feilds',
                     missing
-		},
+                },
                 data:req.body
             })
         }
@@ -1559,20 +1560,16 @@ router.post('/UpdateUserPhone', async (req, res) => {
         //bcrypting password
         pWord = await bcryptPass(pWord)
         //calling database
-        const query = `CALL UpdateUserPhone(?,?,?,? @status);Select @status;`
+        const query = `CALL UpdatePhone(?,?,?,?, @status); Select @status;`
         const data = [ UserEmail.toString(), pWord.toString(), Number(phone), Number(country)]
 
         DBProcedure(query,data, (error, results) => {
             if(error){
-                //deleteing from bucket if any error occur
-                delete_from_S3(s3data.Key)
                 return res.status(error.status).send(error.response)
             }
 
-            //console.log(results)
             res.send({ 
                 status:results[1][0]['@status']
-
             })
         })
 
@@ -1608,7 +1605,7 @@ router.post('/UpdateUserName', async (req, res) => {
             return res.status(400).send({
                 error:{
                     message:'Error/missing feilds',
-		    missing
+                    missing
                 },
                 data:req.body
             })
@@ -1622,8 +1619,6 @@ router.post('/UpdateUserName', async (req, res) => {
 
         DBProcedure(query,data, (error, results) => {
             if(error){
-                //deleteing from bucket if any error occur
-                delete_from_S3(s3data.Key)
                 return res.status(error.status).send(error.response)
             }
 
@@ -1665,7 +1660,7 @@ router.post('/addImageToPost', imageUpload, async (req, res) => {
             return res.status(400).send({
                 error:{
                     message:'Error/missing feilds',
-                    missing,
+                    missing
                 },
                 data:req.body
             })
@@ -1688,7 +1683,7 @@ router.post('/addImageToPost', imageUpload, async (req, res) => {
         const PhotoLink = s3data.Location
 
         //bcrypting password
-        pWord = await bcryptPass(pWord)
+        Pword = await bcryptPass(pWord)
         //calling database
         const query = `CALL AddImageToPost(?, ?, ?, ?, @status); SELECT @status;`
         const data = [UserEmail.toString(),pWord.toString(), Number(postId), PhotoLink.toString()]
@@ -1707,44 +1702,8 @@ router.post('/addImageToPost', imageUpload, async (req, res) => {
                 })
             }
 
-            let PostId = results[1][0]['@lastId']
             res.send({
-                status: results[1][0]['@status'],
-		        PostId 
-            })
-
-            //notificaiton to requested responders
-            let emailProcedure = ``
-            emails.forEach(email => {
-                email = SqlString.escape(emails)
-                emailProcedure += `CALL AddRespondersToPosts(${PostId}, ${email}, @status, @NotiToakn, @message); SELECT @status, @NotiToakn, @message;`
-            })
-
-            DBProcedure(emailProcedure, [], (error, resultsArray) => {
-                if(error){
-                    return
-                }
-
-                    //firebase notification
-                for(let i = 1;i < resultsArray.length;i=i+2){
-                    //console.log("Inner Result :::: ", resultsArray[i][0])
-                    if(resultsArray[i][0]['@status'] == 1 && resultsArray[i][0]['@message'] && resultsArray[i][0]['@NotiToakn']){
-                        // ****************************** 
-                        //  Firebase Notification
-                        //  resultsArray[i][0]['@message']
-                        //  resultsArray[i][0]['@NotiToakn']
-                        //  ******************************
-                        const  registrationToken = resultsArray[i][0]['@NotiToakn']
-                        const message = {
-                                notification: {
-                                    title: "Friend Request",
-                                    body: "Friend Request"//resultsArray[i][0]['@message'].toString()
-                                }
-                            }
-        
-                        sendNotification(registrationToken, message)
-                    }
-                } 
+                status: results[1][0]['@status']
             })
 
         })

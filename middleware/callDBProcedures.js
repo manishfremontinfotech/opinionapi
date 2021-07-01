@@ -23,7 +23,7 @@ const DBProcedure = async (query, data, callback) => {
             connection.query(query, data, function (error, results, fields) {
                 //checking if any error
                 if (error) {
-                    console.log(error)
+                    console.log("Error in Database >>>>>>>>>>>>>>>>>", error)
                     return callback({
                         response: {
                             error:{
