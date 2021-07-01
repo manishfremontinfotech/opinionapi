@@ -1527,6 +1527,7 @@ router.post('/UpdateUserProfilePhoto', imageUpload, async (req, res) => {
 router.post('/UpdateUserPhone', async (req, res) => {
     try{
 
+        console.log('Here')
         const body = JSON.parse(JSON.stringify(req.body)) 
         let { UserEmail, pWord, phone, country} = body
 
@@ -1563,10 +1564,12 @@ router.post('/UpdateUserPhone', async (req, res) => {
         const query = `CALL UpdatePhone(?,?,?,?, @status); Select @status;`
         const data = [ UserEmail.toString(), pWord.toString(), Number(phone), Number(country)]
 
-        DBProcedure(query,data, (error, results) => {
+        DBProcedure(query, data, (error, results) => {
             if(error){
                 return res.status(error.status).send(error.response)
             }
+
+            console.log(results, results[1][0])
 
             res.send({ 
                 status:results[1][0]['@status']
@@ -1613,8 +1616,10 @@ router.post('/UpdateUserName', async (req, res) => {
 
         //bcrypting password
         pWord = await bcryptPass(pWord)
+
+        console.log(UserEmail, pWord, NewName)
         //calling database
-        const query = `CALL UpdateUserName(?,?,?, @status);Select @status;`
+        const query = `CALL UpdateUserName(?,?,?, @success);Select @success;`
         const data = [ UserEmail.toString(), pWord.toString(), NewName.toString()]
 
         DBProcedure(query,data, (error, results) => {
@@ -1622,9 +1627,9 @@ router.post('/UpdateUserName', async (req, res) => {
                 return res.status(error.status).send(error.response)
             }
 
-            //console.log(results)
-            res.send({ 
-                status:results[1][0]['@status']
+            console.log(results)
+            res.send({
+                status:results[1][0]['@success']
             })
         })
 
@@ -1714,6 +1719,5 @@ router.post('/addImageToPost', imageUpload, async (req, res) => {
         res.status(500).send({error:{message:"API internal error, refer console for more information."}})
     }
 })
-
 
 module.exports = router
