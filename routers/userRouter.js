@@ -1,4 +1,5 @@
 const router = require('express').Router()
+const SqlString = require('sqlstring');
 
 const validator = require('validator')
 const sanitizeHtml = require('sanitize-html')
@@ -61,18 +62,21 @@ router.post('/addEmail', async (req, res) => {
         const LINK = await generateUUID()
         //bcrypting password
         pWord = await bcryptPass(pWord)
+        
 
         //calling database
-        const query = `CALL AddEmail("${UserEmail}","${pWord}",@status, "${LINK}", @msg); SELECT @status, @msg;`
-        DBProcedure(query, (error, results) => {
+        const query = `CALL AddEmail(?, ?, @status, ?, @msg); SELECT @status, @msg;`
+        const data = [UserEmail.toString(), pWord.toString(), LINK.toString()]
+        DBProcedure(query, data, async (error, results) => {
             if(error){
                 return res.status(error.status).send(error.response)
             }
 
             //if user created sending verification mail
-            if(results[1][0]['@status'])
-                sendEmail(UserEmail, LINK)
-
+            if(results[1][0]['@status']){
+                console.log("sent")
+                await sendEmail(UserEmail, LINK)
+            }
             res.send({
                 status: results[1][0]['@status'],
                 message: results[1][0]['@msg']
@@ -126,10 +130,11 @@ router.post('/addUser', imageUpload, async (req, res) => {
         
         //Checking if any of feild is missing
         const missing = []
+
         if(!UserName || UserName == '' || UserName == 'undefined'){
             missing.push('UserName')
         }
-        if(!Phone || Phone == '' || !validator.isNumeric(Phone) || Phone.toString().length != 10 ){
+        if(!Phone || Phone == '' || !validator.isNumeric(Phone)){
             missing.push('Phone')
         }
         if(!UserEmail || UserEmail == '' || !validator.isEmail(UserEmail)){
@@ -184,8 +189,9 @@ router.post('/addUser', imageUpload, async (req, res) => {
         const facebookSignIn = body.facebookSignIn || "NULL"
 
         //calling database
-        const query = `CALL AddUser("${UserEmail}","${UserName}","${Phone}",${CountryCode}, "${Photo}", @status, "${Password}","${pushNotification}","${googleSignIn}", "${facebookSignIn}", @msg); SELECT @status, @msg;`
-        DBProcedure(query, (error, results) => {
+        const query = `CALL AddUser(? ,? ,? ,?, ? , @status, ? ,? ,? , ? , @msg); SELECT @status, @msg;`
+        const data = [UserEmail.toString() ,UserName.toString() ,Phone.toString() ,Number(CountryCode), Photo.toString() , Password.toString() ,pushNotification.toString() ,googleSignIn.toString() , facebookSignIn.toString() ]
+        DBProcedure(query, data, (error, results) => {
             if(error){
                 delete_from_S3(s3data.Key, false)
                 return res.status(error.status).send(error.response)
@@ -243,8 +249,10 @@ router.post('/addFriend', async (req, res) => {
         //bcrypting password
         Pword = await bcryptPass(Pword)
         //calling database
-        const query = `CALL AddFriend("${UserEmail}","${FriendEmail}",@status,"${Pword}", @NotiToakn, @message); SELECT @status, @NotiToakn, @message;`
-        DBProcedure(query, (error, results) => {
+        const query = `CALL AddFriend(?, ?,@status, ?, @NotiToakn, @message); SELECT @status, @NotiToakn, @message;`
+        const data = [UserEmail.toString(), FriendEmail.toString(), Pword.toString()]
+        
+        DBProcedure(query, data, (error, results) => {
             if(error){
                 return res.status(error.status).send(error.response)
             }
@@ -314,8 +322,10 @@ router.post('/addFriendRequest', async (req, res) => {
         //bcrypting password
         Pword = await bcryptPass(Pword)
         //calling database
-        const query = `CALL AddFriendRequest("${UserEmail}","${FriendEmail}",@status,"${Pword}", @NotiToakn, @message); SELECT @status, @NotiToakn, @message;`
-        DBProcedure(query, (error, results) => {
+        const query = `CALL AddFriendRequest(?,?,@status,?, @NotiToakn, @message); SELECT @status, @NotiToakn, @message;`
+        const data = [UserEmail.toString(), FriendEmail.toString(), Pword.toString()]
+        
+        DBProcedure(query, data, (error, results) => {
             if(error){
                 return res.status(error.status).send(error.response)
             }
@@ -417,8 +427,10 @@ router.post('/addPost', imageUpload, async (req, res) => {
         //bcrypting password
         Pword = await bcryptPass(Pword)
         //calling database
-        const query = `CALL AddPost("${UserEmail}", "${PhotoLink}", "${Question}", ${Rating}, "${Comment}", "${Attachment}", "${Pword}", @status, @lastId); SELECT @status, @lastId;`
-        DBProcedure(query, (error, results) => {
+        const query = `CALL AddPost(?, ?, ?, ?, ?, ?, ?, @status, @lastId); SELECT @status, @lastId;`
+        const data = [UserEmail.toString(), PhotoLink.toString(), Question.toString(), Number(Rating), Comment.toString(), Attachment.toString(), Pword.toString()]
+
+        DBProcedure(query, data, (error, results) => {
             if(error){
                 delete_from_S3(s3data.Key, true)
                 return res.status(error.status).send(error.response)
@@ -441,16 +453,17 @@ router.post('/addPost', imageUpload, async (req, res) => {
             //notificaiton to requested responders
             let emailProcedure = ``
             emails.forEach(email => {
-                emailProcedure += `CALL AddRespondersToPosts(${PostId}, "${email}", @status, @NotiToakn, @message); SELECT @status, @NotiToakn, @message;`
+                email = SqlString.escape(emails)
+                emailProcedure += `CALL AddRespondersToPosts(${PostId}, ${email}, @status, @NotiToakn, @message); SELECT @status, @NotiToakn, @message;`
             })
 
-            DBProcedure(emailProcedure, (error, resultsArray) => {
+            DBProcedure(emailProcedure, [], (error, resultsArray) => {
                 if(error){
                     return
                 }
 
                     //firebase notification
-/*                for(let i = 1;i < resultsArray.length;i=i+2){
+                for(let i = 1;i < resultsArray.length;i=i+2){
                     //console.log("Inner Result :::: ", resultsArray[i][0])
                     if(resultsArray[i][0]['@status'] == 1 && resultsArray[i][0]['@message'] && resultsArray[i][0]['@NotiToakn']){
                         // ****************************** 
@@ -458,17 +471,17 @@ router.post('/addPost', imageUpload, async (req, res) => {
                         //  resultsArray[i][0]['@message']
                         //  resultsArray[i][0]['@NotiToakn']
                         //  ******************************
-                        // const  registrationToken = resultsArray[i][0]['@NotiToakn']
-                        // const message = {
-                        //         notification: {
-                        //             title: "Friend Request",
-                        //             body: "Friend Request"//resultsArray[i][0]['@message'].toString()
-                        //         }
-                        //     }
+                        const  registrationToken = resultsArray[i][0]['@NotiToakn']
+                        const message = {
+                                notification: {
+                                    title: "Friend Request",
+                                    body: "Friend Request"//resultsArray[i][0]['@message'].toString()
+                                }
+                            }
         
-                        // sendNotification(registrationToken, message)
+                        sendNotification(registrationToken, message)
                     }
-                } */
+                } 
             })
 
         })
@@ -479,7 +492,6 @@ router.post('/addPost', imageUpload, async (req, res) => {
         res.status(500).send({error:{message:"API internal error, refer console for more information."}})
     }
 })
-
 
 // ******************************************************************************
 //uncomment attachment code
@@ -530,8 +542,10 @@ router.post('/addResponse', /* imageUpload, */ async (req, res) => {
         //bcrypting password
         Pword = await bcryptPass(Pword)
         //calling database
-        const query = `CALL AddResponse("${UserEmail}", "${postId}", ${Rating}, "${Comment}", "${Attachment}", "${Pword}", @status, @NotiToakn, @message); SELECT @status, @NotiToakn, @message;`
-        DBProcedure(query, (error, results) => {
+        const query = `CALL AddResponse(?, ?, ?, ?, ?, ?, @status, @NotiToakn, @message); SELECT @status, @NotiToakn, @message;`
+        const data = [UserEmail.toString(), postId.toString(), Number(Rating), Comment.toString(), Attachment.toString(), Pword.toString()]
+        
+        DBProcedure(query, data, (error, results) => {
             if(error){
                 return res.status(error.status).send(error.response)
             }
@@ -583,8 +597,10 @@ router.post('/cancelFriendRequest', async (req, res) => {
         //bcrypting password
         Pword = await bcryptPass(Pword)
         //calling database
-        const query = `CALL CancelFriendRequest("${UserEmail}","${FriendEmail}","${Pword}",@status, @NotiToakn, @message); SELECT @status, @NotiToakn, @message`
-        DBProcedure(query, (error, results) => {
+        const query = `CALL CancelFriendRequest(?,?,?,@status, @NotiToakn, @message); SELECT @status, @NotiToakn, @message`
+        const data = [UserEmail.toString(),FriendEmail.toString(),Pword.toString()]
+        
+        DBProcedure(query, data, (error, results) => {
             if(error){
                 return res.status(error.status).send(error.response)
             }
@@ -600,15 +616,15 @@ router.post('/cancelFriendRequest', async (req, res) => {
                 //  results[1][0]['@message']
                 //  results[1][0]['@NotiToakn']
                 //  ******************************
-                // const  registrationToken = results[1][0]['@NotiToakn']
-                // const message = {
-                //         notification: {
-                //             title: "Friend Request",
-                //             body: "Friend Request"//results[1][0]['@message'].toString()
-                //         }
-                //     }
+                const  registrationToken = results[1][0]['@NotiToakn']
+                const message = {
+                        notification: {
+                            title: "Friend Request",
+                            body: "Friend Request"//results[1][0]['@message'].toString()
+                        }
+                    }
 
-                // sendNotification(registrationToken, message)
+                sendNotification(registrationToken, message)
             }
 
         })
@@ -650,14 +666,15 @@ router.post('/getResponseForAllPostsOfUser', async (req, res) => {
         //bcrypting password
         Pword = await bcryptPass(Pword)
         const query = `
-            CALL GetResponseForAllPostsOfUser("${UserEmail}", "${Pword}", @status); SELECT @status;
-            SELECT UserEmail, postId, photoLink, question, ownrating, OwnComments, NoOfResponses, time FROM TempUsersAllPosts WHERE UserEmail="${UserEmail}";
-            SELECT postId, ResponserEmail, Rating, Comment, time, attachment FROM TempResponses WHERE UserEmail="${UserEmail}";
-            DELETE FROM TempUsersAllPosts WHERE UserEmail="${UserEmail}";
-            DELETE FROM TempResponses WHERE UserEmail="${UserEmail}";
+            CALL GetResponseForAllPostsOfUser(?, ?, @status); SELECT @status;
+            SELECT UserEmail, postId, photoLink, question, ownrating, OwnComments, NoOfResponses, time FROM TempUsersAllPosts WHERE UserEmail=?;
+            SELECT postId, ResponserEmail, Rating, Comment, time, attachment FROM TempResponses WHERE UserEmail=?;
+            DELETE FROM TempUsersAllPosts WHERE UserEmail=?;
+            DELETE FROM TempResponses WHERE UserEmail=?;
         `
+        const data = [UserEmail.toString(), Pword.toString(), UserEmail.toString(), UserEmail.toString(), UserEmail.toString(). UserEmail.toString()]
         //calling database
-        DBProcedure(query, (error, results) => {
+        DBProcedure(query, data, (error, results) => {
             if(error){
                 return res.status(error.status).send(error.response)
             }
@@ -698,6 +715,9 @@ router.post('/getResponseForPost', async (req, res) => {
             missing.push('UserEmail')
         }
 
+        PostId = SqlString.escape(PostId)
+        UserEmail = SqlString.escape(UserEmail)
+
         //If anything missing sending it back to user with error
         if(missing.length){
             return res.status(400).send({
@@ -718,12 +738,13 @@ router.post('/getResponseForPost', async (req, res) => {
         // `
 
         const query = `
-            CALL GetResponseForPost(${PostId}, "${UserEmail}");
-            SELECT postId, ResponserEmail, Rating, Comment, time, attachment FROM TempResponses WHERE postId=${PostId};
-            DELETE FROM TempResponses WHERE postId=${PostId};
+            CALL GetResponseForPost(?, ?);
+            SELECT postId, ResponserEmail, Rating, Comment, time, attachment FROM TempResponses WHERE postId=?;
+            DELETE FROM TempResponses WHERE postId=?;
         `
+        const data = [Number(PostId),UserEmail.toString(),Number(PostId),Number(PostId)]
         //calling database
-        DBProcedure(query, (error, results) => {
+        DBProcedure(query,data, (error, results) => {
             if(error){
                 return res.status(error.status).send(error.response)
             }
@@ -757,6 +778,10 @@ router.post('/getUserFriends', async (req, res) => {
             missing.push('Pword')
         }
 
+        //UserEmail = await SqlString.escape(UserEmail)
+        //Pword = await SqlString.escape(Pword)
+        console.log("Pass:-", Pword)
+
         //If anything missing sending it back to user with error
         if(missing.length){
             return res.status(400).send({
@@ -771,15 +796,18 @@ router.post('/getUserFriends', async (req, res) => {
         //bcrypting password
         Pword = await bcryptPass(Pword)
         const query = `
-            CALL GetUserFriends("${UserEmail}", "${Pword}");
-            SELECT userMail, FriendEmailId, FriendName, FriendPhotoLink, FriendRequestEmailId, FriendRequestName, FriendRequestPhotoLink, Sent_Recieved FROM TempFriendList WHERE userMail="${UserEmail}";
-            DELETE FROM TempFriendList WHERE userMail="${UserEmail}";
+            CALL GetUserFriends( ?, ?);
+            SELECT userMail, FriendEmailId, FriendName, FriendPhotoLink, FriendRequestEmailId, FriendRequestName, FriendRequestPhotoLink, Sent_Recieved FROM TempFriendList WHERE userMail= ?;
+            DELETE FROM TempFriendList WHERE userMail= ?;
         `
+        const data = [UserEmail.toString(), Pword.toString(), UserEmail.toString(),UserEmail.toString()]
         //calling database
-        DBProcedure(query, (error, results) => {
+        DBProcedure(query, data, (error, results) => {
             if(error){
                 return res.status(error.status).send(error.response)
             }
+
+            console.log(results)
 
             res.send({
                 freindsList:results[1]
@@ -799,7 +827,7 @@ router.post('/getUsers', async (req, res) => {
     try{
         const body = JSON.parse(JSON.stringify(req.body)) 
 
- 	let { FirstPara, Email, pWord, offset} = body
+        let { FirstPara, Email, pWord, offset} = body
 
         //Checking if any of feild is missing
         const missing = []
@@ -831,14 +859,18 @@ router.post('/getUsers', async (req, res) => {
             })
         }
 
-  	const query = `
-            CALL getUsers("${FirstPara}", ${Number(offset)}, "${Email}", "${pWord}", @success, @message);
+        //bcrypting password
+        pWord = await bcryptPass(Pword)
+
+        const query = `
+            CALL getUsers(?, ?, ?, ?, @success, @message);
             SELECT @success, @message;
             SELECT userMail, name, photoLLink FROM TempNames;
         `
-	//DELETE FROM TempNames WHERE userMail LIKE "${FirstPara}";
+        const data = [FirstPara.toString(), Number(offset), Email.toString(), pWord.toString()]
+	    //DELETE FROM TempNames WHERE userMail LIKE "${FirstPara}";
         //calling database
-        DBProcedure(query, (error, results) => {
+        DBProcedure(query, data, (error, results) => {
             if(error){
                 return res.status(error.status).send(error.response)
             }
@@ -892,8 +924,10 @@ router.post('/rejectFriendRequest', async (req, res) => {
         //bcrypting password
         Pword = await bcryptPass(Pword)
         //calling database
-        const query = `CALL RejectFriendRequest("${UserEmail}","${FriendEmail}","${Pword}",@status, @NotiToakn, @message); SELECT @status, @NotiToakn, @message;`
-        DBProcedure(query, (error, results) => {
+        const query = `CALL RejectFriendRequest(?,?,?,@status, @NotiToakn, @message); SELECT @status, @NotiToakn, @message;`
+        const data = [UserEmail.toString(), FriendEmail.toString(), Pword.toString()]
+        
+        DBProcedure(query,data, (error, results) => {
             if(error){
                 return res.status(error.status).send(error.response)
             }
@@ -909,15 +943,15 @@ router.post('/rejectFriendRequest', async (req, res) => {
                 //  results[1][0]['@message']
                 //  results[1][0]['@NotiToakn']
                 //  ******************************
-                // const  registrationToken = results[1][0]['@NotiToakn']
-                // const message = {
-                //         notification: {
-                //             title: "Friend Request",
-                //             body: "Friend Request"//results[1][0]['@message'].toString()
-                //         }
-                //     }
+                const  registrationToken = results[1][0]['@NotiToakn']
+                const message = {
+                        notification: {
+                            title: "Friend Request",
+                            body: "Friend Request"//results[1][0]['@message'].toString()
+                        }
+                    }
 
-                // sendNotification(registrationToken, message)
+                sendNotification(registrationToken, message)
             }
         })
 
@@ -963,8 +997,10 @@ router.post('/removeFriend', async (req, res) => {
         //bcrypting password
         Pword = await bcryptPass(Pword)
         //calling database
-        const query = `CALL RemoveFriend("${UserEmail}","${FriendEmail}","${Pword}",@status, @NotiToakn, @message); SELECT @status, @NotiToakn, @message;`
-        DBProcedure(query, (error, results) => {
+        const query = `CALL RemoveFriend(?,?,?,@status, @NotiToakn, @message); SELECT @status, @NotiToakn, @message;`
+        const data = [UserEmail.toString(), FriendEmail.toString(), Pword.toString()]
+        
+        DBProcedure(query,data, (error, results) => {
             if(error){
                 return res.status(error.status).send(error.response)
             }
@@ -980,15 +1016,15 @@ router.post('/removeFriend', async (req, res) => {
                 //  results[1][0]['@message']
                 //  results[1][0]['@NotiToakn']
                 //  ******************************
-                // const  registrationToken = results[1][0]['@NotiToakn']
-                // const message = {
-                //         notification: {
-                //             title: "Friend Request",
-                //             body: "Friend Request"//results[1][0]['@message'].toString()
-                //         }
-                //     }
+                const  registrationToken = results[1][0]['@NotiToakn']
+                const message = {
+                        notification: {
+                            title: "Friend Request",
+                            body: "Friend Request"//results[1][0]['@message'].toString()
+                        }
+                    }
 
-                // sendNotification(registrationToken, message)
+                sendNotification(registrationToken, message)
             }
         })
 
@@ -1032,7 +1068,8 @@ router.post('/removeUser', async (req, res) => {
 
         //calling database
         const query = `CALL RemoveUser("${UserEmail}", "${Pword}", @status); SELECT @status;`
-        DBProcedure(query, (error, results) => {
+        const data = [UserEmail.toString(), Pword.toString()]
+        DBProcedure(query,data, (error, results) => {
             if(error){
                 return res.status(error.status).send(error.response)
             }
@@ -1049,97 +1086,6 @@ router.post('/removeUser', async (req, res) => {
         res.status(500).send({error:{message:"API internal error, refer console for more information."}})
     }
 })
-
-
-// ***********************************************************************
-router.post('/UpdateUser', imageUpload, async (req, res) => {
-    try{
-
-        const body = JSON.parse(JSON.stringify(req.body)) 
-
-        let { name, userNewEmail, userNewPhone, userNewName, userOldEmail, userNewPassword, userNewCountryCode, pWord } = body
-        UserName = sanitizeHtml(userNewName)
-        UserEmail = sanitizeHtml(userNewEmail)
-
-        //Checking if any of feild is missing
-        const missing = []
-        if(!name || name == '' || name == 'undefined'){
-            missing.push('name')
-        }
-        if(!userNewName || userNewName == '' || userNewName == 'undefined'){
-            missing.push('userNewName')
-        }
-        if(!userNewEmail || userNewEmail == '' || !validator.isEmail(userNewEmail)){
-            missing.push('userNewEmail')
-        }
-        if(!userOldEmail || userOldEmail == '' || !validator.isEmail(userOldEmail)){
-            missing.push('userOldEmail')
-        }
-        if(!userNewPhone || userNewPhone == '' || !validator.isNumeric(userNewPhone) || userNewPhone.toString().length != 10 ){
-            missing.push('userNewPhone')
-        }
-        if(!userNewPassword || userNewPassword == '' || userNewPassword == 'undefined'){
-            missing.push('userNewPassword')
-        }
-        if(!pWord || pWord == '' || pWord == 'undefined'){
-            missing.push('pWord')
-        }
-        if(!userNewCountryCode || !countryCode.includes(Number(userNewCountryCode))){
-            missing.push('userNewCountryCode')
-        }
-        if(!req.file || req.imageUploadError){
-            missing.push('userNewPhoto')
-        }
-
-        //If anything missing sending it back to user with error
-        if(missing.length){
-            return res.status(400).send({
-                error:{
-                    message:'Error/missing feilds',
-                },
-                data:req.body
-            })
-        }
-
-        //resize image
-      	//req.file.buffer = await compressImage(req.file.buffer, 200, 200)
-
-        /* Uplading to bucket S3 */
-        const [s3data, error] = await upload_to_S3(req.file, false)
-        if(error){
-            return res.status(502).send({
-                error:{
-                    message:'Fail to upload image to storage.',
-                    missing,
-                }
-            })
-        }
-        const userNewPhoto = s3data.Location
-
-        //bcrypting password
-        pWord = await bcryptPass(pWord)
-        //calling database
-        const query = `CALL UpdateUser("${name}","${userNewEmail}","${userNewPhoto}","${userNewPhone}", "${userNewName}", "${userOldEmail}", "${userNewPassword}", ${userNewCountryCode}, "${pWord}", @status);`
-        DBProcedure(query, (error, results) => {
-            if(error){
-                //deleteing from bucket if any error occur
-                delete_from_S3(s3data.Key)
-                return res.status(error.status).send(error.response)
-            }
-
-            //console.log(results)
-            res.send({ 
-                status:1,
-            })
-        })
-
-    } catch(e) {
-        //Network or internal errors
-        console.log(e)
-        res.status(500).send({error:{message:"API internal error, refer console for more information."}})
-    }
-})
-
 
 //*********************************************************************************************** */
 router.post('/getUserProfile', async (req, res) => {
@@ -1171,19 +1117,13 @@ router.post('/getUserProfile', async (req, res) => {
         //bcrypting password
         pWord = await bcryptPass(pWord)
         //calling database
-        const query = `CALL GetUserProfile("${UserSingUpId}", "${pWord}", @status, @PhoneNumber, @country, @photo, @emailId, @name, @msg); SELECT @status, @PhoneNumber, @country, @photo, @emailId, @name, @msg;`
-        DBProcedure(query, (error, results) => {
+        const query = `CALL GetUserProfile(?,?, @status, @PhoneNumber, @country, @photo, @emailId, @name, @msg); SELECT @status, @PhoneNumber, @country, @photo, @emailId, @name, @msg;`
+        const data = [UserSingUpId.toString(), pWord.toString()]
+
+        DBProcedure(query,data, (error, results) => {
             if(error){
                 return res.status(error.status).send(error.response)
             }
-	
-	 /*
-            if(results[1][0]['@status'] != 1){
-                return res.status(404).send({
-                    message: results[1][0]['@msg'],
-                    status:results[1][0]['@status']
-                })
-            } */
 
             console.log(results)
             res.send({
@@ -1193,7 +1133,7 @@ router.post('/getUserProfile', async (req, res) => {
                 emailId:results[1][0]['@emailId'],
                 name:results[1][0]['@name'],
                 photo:results[1][0]['@photo'],
-		message: results[1][0]['@msg']
+		        message: results[1][0]['@msg']
             })
         })
 
@@ -1238,10 +1178,11 @@ router.post('/getAnalyticsData', async (req, res) => {
         //bcrypting password
         Pword = await bcryptPass(Pword)
         const query = `
-            CALL GetAnalyticsData("${StartDate}", "${Endate}", ${Pword});
+            CALL GetAnalyticsData(?,?,?);
             Select * from TempAnalyticsData;
         `
-        DBProcedure(query, (error, results) => {
+        const data = [StartDate.toString(), Endate.toString(), Pword.toString()]
+        DBProcedure(query,data, (error, results) => {
             if(error){
                 return res.status(error.status).send(error.response)
             }
@@ -1291,9 +1232,9 @@ router.post('/addPushNotificationToken', async (req, res) => {
         pWord = await bcryptPass(pWord)
 
         //calling database
-        const query = `CALL AddPushNotificationToken("${UserEmail}","${pWord}", "${Token}",@status, @msg); SELECT @status, @msg;`
-        console.log(query)
-        DBProcedure(query, (error, results) => {
+        const query = `CALL AddPushNotificationToken(?,?,?,@status, @msg); SELECT @status, @msg;`
+        const data = [UserEmail.toString(), pWord.toString(), Token.toString()]
+        DBProcedure(query,data, (error, results) => {
             if(error){
                 return res.status(error.status).send(error.response)
             }
@@ -1346,8 +1287,9 @@ router.post('/changePassword', async (req, res) => {
         NewPword = await bcryptPass(NewPword)
 
         //calling database
-        const query = `CALL ChangePassword("${UserEmail}","${oldPword}", "${NewPword}",@success); SELECT @success;`
-        DBProcedure(query, (error, results) => {
+        const query = `CALL ChangePassword(?,?,?,@success); SELECT @success;`
+        const data = [UserEmail.toString(), oldPword.toString(), NewPword.toString()]
+        DBProcedure(query, data, (error, results) => {
             if(error){
                 return res.status(error.status).send(error.response)
             }
@@ -1389,8 +1331,9 @@ router.post('/forgotPassword', async (req, res) => {
         }
 
         //calling database
-        const query = `CALL ForgotPassword("${UserEmail}",@success, @Pword);SELECT @success, @Pword`
-        DBProcedure(query, (error, results) => {
+        const query = `CALL ForgotPassword(?,@success, @Pword);SELECT @success, @Pword`
+        const data = [UserEmail.toString()]
+        DBProcedure(query, data, (error, results) => {
             if(error){
                 return res.status(error.status).send(error.response)
             }
@@ -1405,6 +1348,403 @@ router.post('/forgotPassword', async (req, res) => {
 
         })
     
+    } catch(e) {
+        //Network or internal errors
+        console.log(e)
+        res.status(500).send({error:{message:"API internal error, refer console for more information."}})
+    }
+})
+
+
+// ***********************************************************************
+router.post('/UpdateUser', imageUpload, async (req, res) => {
+    try{
+
+        const body = JSON.parse(JSON.stringify(req.body)) 
+
+        let { name, userNewEmail, userNewPhone, userNewName, userOldEmail, userNewPassword, userNewCountryCode, pWord } = body
+        UserName = sanitizeHtml(userNewName)
+        UserEmail = sanitizeHtml(userNewEmail)
+
+        //Checking if any of feild is missing
+        const missing = []
+        if(!name || name == '' || name == 'undefined'){
+            missing.push('name')
+        }
+        if(!userNewName || userNewName == '' || userNewName == 'undefined'){
+            missing.push('userNewName')
+        }
+        if(!userNewEmail || userNewEmail == '' || !validator.isEmail(userNewEmail)){
+            missing.push('userNewEmail')
+        }
+        if(!userOldEmail || userOldEmail == '' || !validator.isEmail(userOldEmail)){
+            missing.push('userOldEmail')
+        }
+        if(!userNewPhone || userNewPhone == '' || !validator.isNumeric(userNewPhone)){
+            missing.push('userNewPhone')
+        }
+        if(!userNewPassword || userNewPassword == '' || userNewPassword == 'undefined'){
+            missing.push('userNewPassword')
+        }
+        if(!pWord || pWord == '' || pWord == 'undefined'){
+            missing.push('pWord')
+        }
+        if(!userNewCountryCode || !countryCode.includes(Number(userNewCountryCode))){
+            missing.push('userNewCountryCode')
+        }
+        if(!req.file || req.imageUploadError){
+            missing.push('userNewPhoto')
+        }
+
+        //If anything missing sending it back to user with error
+        if(missing.length){
+            return res.status(400).send({
+                error:{
+                    message:'Error/missing feilds',
+                },
+                data:req.body
+            })
+        }
+
+        //resize image
+      	//req.file.buffer = await compressImage(req.file.buffer, 200, 200)
+
+        /* Uplading to bucket S3 */
+        const [s3data, error] = await upload_to_S3(req.file, false)
+        if(error){
+            return res.status(502).send({
+                error:{
+                    message:'Fail to upload image to storage.',
+                    missing,
+                }
+            })
+        }
+        const userNewPhoto = s3data.Location
+
+        //bcrypting password
+        pWord = await bcryptPass(pWord)
+        //calling database
+        const query = `CALL UpdateUser(?,?,?,?, ?, ?, ?, ?, ?, @status);`
+        const data = [name.toString(),userNewEmail.toString(),userNewPhoto.toString(),userNewPhone.toString(), userNewName.toString(), userOldEmail.toString(), userNewPassword.toString(), Number(userNewCountryCode), pWord.toString()]
+        
+        DBProcedure(query, data, (error, results) => {
+            if(error){
+                //deleteing from bucket if any error occur
+                delete_from_S3(s3data.Key)
+                return res.status(error.status).send(error.response)
+            }
+
+            //console.log(results)
+            res.send({ 
+                status:1,
+            })
+        })
+
+    } catch(e) {
+        //Network or internal errors
+        console.log(e)
+        res.status(500).send({error:{message:"API internal error, refer console for more information."}})
+    }
+})
+
+router.post('/UpdateUserProfilePhoto', imageUpload, async (req, res) => {
+    try{
+
+        const body = JSON.parse(JSON.stringify(req.body)) 
+
+        let { UserEmail, pWord} = body
+
+        //Checking if any of feild is missing
+        const missing = []
+        
+        if(!UserEmail || UserEmail == '' || UserEmail == 'undefined'){
+            missing.push('UserEmail')
+        }
+        if(!pWord || pWord == ''){
+            missing.push('pWord')
+        }
+        if(!req.file){
+            missing.push('Photo')
+        }
+
+        //If anything missing sending it back to user with error
+        if(missing.length){
+            return res.status(400).send({
+                error:{
+                    message:'Error/missing feilds',
+                },
+                data:req.body
+            })
+        }
+
+        //resize image
+      	//req.file.buffer = await compressImage(req.file.buffer, 200, 200)
+
+        /* Uplading to bucket S3 */
+        const [s3data, error] = await upload_to_S3(req.file, false)
+        if(error){
+            return res.status(502).send({
+                error:{
+                    message:'Fail to upload image to storage.',
+                    missing,
+                }
+            })
+        }
+        const userNewPhoto = s3data.Location
+
+        //bcrypting password
+        pWord = await bcryptPass(pWord)
+        //calling database
+        const query = `CALL UpdateUserProfilePhoto(?,?,? @status);Select @status;`
+        const data = [UserEmail.toString(), pWord.toString(), userNewPhoto.toString()]
+
+        DBProcedure(query,data, (error, results) => {
+            if(error){
+                //deleteing from bucket if any error occur
+                delete_from_S3(s3data.Key)
+                return res.status(error.status).send(error.response)
+            }
+
+            //console.log(results)
+            res.send({ 
+                status:results[1][0]
+            })
+        })
+
+    } catch(e) {
+        //Network or internal errors
+        console.log(e)
+        res.status(500).send({error:{message:"API internal error, refer console for more information."}})
+    }
+})
+
+router.post('/UpdateUserPhone', async (req, res) => {
+    try{
+
+        const body = JSON.parse(JSON.stringify(req.body)) 
+
+        let { UserEmail, pWord, phone, country} = body
+
+        //Checking if any of feild is missing
+        const missing = []
+        
+        if(!UserEmail || UserEmail == '' || UserEmail == 'undefined'){
+            missing.push('UserEmail')
+        }
+        if(!pWord || pWord == '' || !validator.isEmail(pWord)){
+            missing.push('pWord')
+        }
+        if(!pWord || pWord == ''){
+            missing.push('pWord')
+        }
+        if(!country || country == '' || !validator.isNumeric(country.toString()) || !countryCode.includes(country)){
+            missing.push('country')
+        }
+        if(!phone || phone == '' || !validator.isNumeric(phone.toString())){
+            missing.push('phone')
+        }
+
+        //If anything missing sending it back to user with error
+        if(missing.length){
+            return res.status(400).send({
+                error:{
+                    message:'Error/missing feilds',
+                },
+                data:req.body
+            })
+        }
+
+        //bcrypting password
+        pWord = await bcryptPass(pWord)
+        //calling database
+        const query = `CALL UpdateUserPhone(?,?,?,? @status);Select @status;`
+        const data = [ UserEmail.toString(), pWord.toString(), Number(phone), Number(country)]
+
+        DBProcedure(query,data, (error, results) => {
+            if(error){
+                //deleteing from bucket if any error occur
+                delete_from_S3(s3data.Key)
+                return res.status(error.status).send(error.response)
+            }
+
+            //console.log(results)
+            res.send({ 
+                status:results[1][0]
+            })
+        })
+
+    } catch(e) {
+        //Network or internal errors
+        console.log(e)
+        res.status(500).send({error:{message:"API internal error, refer console for more information."}})
+    }
+})
+
+router.post('/UpdateUserName', async (req, res) => {
+    try{
+
+        const body = JSON.parse(JSON.stringify(req.body)) 
+
+        let { UserEmail, pWord, NewName} = body
+
+        //Checking if any of feild is missing
+        const missing = []
+        
+        if(!UserEmail || UserEmail == '' || UserEmail == 'undefined'){
+            missing.push('UserEmail')
+        }
+        if(!pWord || pWord == '' || !validator.isEmail(pWord)){
+            missing.push('pWord')
+        }
+        if(!NewName || NewName == ''){
+            missing.push('NewName')
+        }
+
+        //If anything missing sending it back to user with error
+        if(missing.length){
+            return res.status(400).send({
+                error:{
+                    message:'Error/missing feilds',
+                },
+                data:req.body
+            })
+        }
+
+        //bcrypting password
+        pWord = await bcryptPass(pWord)
+        //calling database
+        const query = `CALL UpdateUserName(?,?,?, @status);Select @status;`
+        const data = [ UserEmail.toString(), pWord.toString(), NewName.toString()]
+
+        DBProcedure(query,data, (error, results) => {
+            if(error){
+                //deleteing from bucket if any error occur
+                delete_from_S3(s3data.Key)
+                return res.status(error.status).send(error.response)
+            }
+
+            //console.log(results)
+            res.send({ 
+                status:results[1][0]
+            })
+        })
+
+    } catch(e) {
+        //Network or internal errors
+        console.log(e)
+        res.status(500).send({error:{message:"API internal error, refer console for more information."}})
+    }
+})
+
+
+// ******************************************************************************
+router.post('/addImageToPost', imageUpload, async (req, res) => {
+    try{
+        const body = JSON.parse(JSON.stringify(req.body)) 
+
+        let { UserEmail , pWord, postId} = body
+
+        //Checking if any of feild is missing
+        const missing = []
+        if(!UserEmail || UserEmail == '' || !validator.isEmail(UserEmail)){
+            missing.push('UserEmail')
+        }
+        if(!pWord || pWord == ''){
+            missing.push('pWord')
+        }
+        if(!postId || !validator.isNumeric(postId)){
+            missing.push('postId')
+        }
+        
+        //If anything missing sending it back to user with error
+        if(missing.length){
+            return res.status(400).send({
+                error:{
+                    message:'Error/missing feilds',
+                    missing,
+                },
+                data:req.body
+            })
+        }
+
+        //resize image
+       // req.file.buffer = await compressImage(req.file.buffer, 200, 200)
+
+        /* Uplading to bucket S3 */
+        const [s3data, error] = await upload_to_S3(req.file, true)
+        if(error){
+            return res.status(502).send({
+                error:{
+                    message:'Fail to upload image to storage',
+                }
+            })
+        }
+
+
+        const PhotoLink = s3data.Location
+
+        //bcrypting password
+        Pword = await bcryptPass(Pword)
+        //calling database
+        const query = `CALL Add(?, ?, ?, ?, @status); SELECT @status;`
+        const data = [UserEmail.toString(),pWord.toString(), Number(postId), PhotoLink.toString()]
+
+        DBProcedure(query, data, (error, results) => {
+            if(error){
+                delete_from_S3(s3data.Key, true)
+                return res.status(error.status).send(error.response)
+            }
+
+            //delete image form bucket if procedure failed
+            if(results[1][0]['@status'] != 1){
+                delete_from_S3(s3data.Key, true)
+                return res.send({
+                    status: results[1][0]['@status']
+                })
+            }
+
+            let PostId = results[1][0]['@lastId']
+            res.send({
+                status: results[1][0]['@status'],
+		        PostId 
+            })
+
+            //notificaiton to requested responders
+            let emailProcedure = ``
+            emails.forEach(email => {
+                email = SqlString.escape(emails)
+                emailProcedure += `CALL AddRespondersToPosts(${PostId}, ${email}, @status, @NotiToakn, @message); SELECT @status, @NotiToakn, @message;`
+            })
+
+            DBProcedure(emailProcedure, [], (error, resultsArray) => {
+                if(error){
+                    return
+                }
+
+                    //firebase notification
+                for(let i = 1;i < resultsArray.length;i=i+2){
+                    //console.log("Inner Result :::: ", resultsArray[i][0])
+                    if(resultsArray[i][0]['@status'] == 1 && resultsArray[i][0]['@message'] && resultsArray[i][0]['@NotiToakn']){
+                        // ****************************** 
+                        //  Firebase Notification
+                        //  resultsArray[i][0]['@message']
+                        //  resultsArray[i][0]['@NotiToakn']
+                        //  ******************************
+                        const  registrationToken = resultsArray[i][0]['@NotiToakn']
+                        const message = {
+                                notification: {
+                                    title: "Friend Request",
+                                    body: "Friend Request"//resultsArray[i][0]['@message'].toString()
+                                }
+                            }
+        
+                        sendNotification(registrationToken, message)
+                    }
+                } 
+            })
+
+        })
+
     } catch(e) {
         //Network or internal errors
         console.log(e)

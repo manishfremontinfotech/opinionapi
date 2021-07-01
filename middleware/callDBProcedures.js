@@ -5,7 +5,7 @@ const pool = require('../dbConnection')
 // error as null and result as resluts array if successfull
 
 
-const DBProcedure = async (query, callback) => {
+const DBProcedure = async (query, data, callback) => {
     await pool.getConnection((err, connection) => {
             //checking if any errors
             if(err){
@@ -20,7 +20,7 @@ const DBProcedure = async (query, callback) => {
                 }, null)
             }
 
-            connection.query(query, function (error, results, fields) {
+            connection.query(query, data, function (error, results, fields) {
                 //checking if any error
                 if (error) {
                     console.log(error)
