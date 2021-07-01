@@ -799,18 +799,21 @@ router.post('/getUsers', async (req, res) => {
     try{
         const body = JSON.parse(JSON.stringify(req.body)) 
 
-        let { FirstPara, SecondPara, offset} = body
+ 	let { FirstPara, Email, pWord, offset} = body
 
         //Checking if any of feild is missing
         const missing = []
 
-        if(FirstPara){
-            SecondPara = " "
-        } else if(SecondPara){
-            FirstPara = " "
-        } else {
+        if(!Email || !validator.isEmail(Email.toString())){
+            missing.push('Email')
+        }
+
+        if(!pWord || pWord == ""){
+            missing.push('pWord')
+        }
+
+        if(!FirstPara || FirstPara == ""){
             missing.push('FirstPara')
-            missing.push('SecondPara')
         }
 
         if(!offset || !validator.isNumeric(offset.toString())){
@@ -828,8 +831,9 @@ router.post('/getUsers', async (req, res) => {
             })
         }
 
-        const query = `
-            CALL getUsers("${FirstPara}", ${Number(offset)});
+  	const query = `
+            CALL getUsers("${FirstPara}", ${Number(offset)}, "${Email}", "${pWord}", @success, @message);
+            SELECT @success, @message;
             SELECT userMail, name, photoLLink FROM TempNames;
         `
 	//DELETE FROM TempNames WHERE userMail LIKE "${FirstPara}";
@@ -839,9 +843,11 @@ router.post('/getUsers', async (req, res) => {
                 return res.status(error.status).send(error.response)
             }
 
-            console.log(results[1])
+            console.log(results)
             res.send({
-                users:results[1]
+                message: results[1][0]['@success'],
+                message: results[1][0]['@message'],
+                users:results[2]
             })
         })
 
@@ -1165,7 +1171,7 @@ router.post('/getUserProfile', async (req, res) => {
         //bcrypting password
         pWord = await bcryptPass(pWord)
         //calling database
-        const query = `CALL GetUserProfile("${UserSingUpId}", "${pWord}", @status, @PhoneNumber, @country, @photo, @emailId, @name, @msg); SELECT @status, @status, @PhoneNumber, @country, @photo, @emailId, @name, @msg;`
+        const query = `CALL GetUserProfile("${UserSingUpId}", "${pWord}", @status, @PhoneNumber, @country, @photo, @emailId, @name, @msg); SELECT @status, @PhoneNumber, @country, @photo, @emailId, @name, @msg;`
         DBProcedure(query, (error, results) => {
             if(error){
                 return res.status(error.status).send(error.response)
