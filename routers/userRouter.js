@@ -674,8 +674,10 @@ router.post('/getResponseForAllPostsOfUser', async (req, res) => {
             CALL GetResponseForAllPostsOfUser(?, ?, @status); SELECT @status;
             SELECT UserEmail, postId, photoLink, question, ownrating, OwnComments, NoOfResponses, time FROM TempUsersAllPosts WHERE UserEmail=?;
             SELECT postId, ResponserEmail, Rating, Comment, time, attachment FROM TempResponses WHERE UserEmail=?;
+            SELECT Email, PostId, photoLLink FROM TempAddedPostImages;
             DELETE FROM TempUsersAllPosts WHERE UserEmail=?;
             DELETE FROM TempResponses WHERE UserEmail=?;
+            DELETE FROM TempAddedPostImages WHERE 1 = 1;
         `
         const data = [UserEmail.toString(), Pword.toString(), UserEmail.toString(), UserEmail.toString(), UserEmail.toString(), UserEmail.toString()]
         //calling database
@@ -694,7 +696,8 @@ router.post('/getResponseForAllPostsOfUser', async (req, res) => {
             res.send({ 
                 status:results[1][0]['@status'],
                 post:results[2],
-                responses: results[3]
+                responses: results[3],
+                images : results[4]
             })
         })
 
