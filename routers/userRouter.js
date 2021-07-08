@@ -1723,4 +1723,60 @@ router.post('/addImageToPost', imageUpload, async (req, res) => {
     }
 })
 
+//*********************************************************************************************** */
+router.post('/getOpinionRequests', async (req, res) => {
+    try{
+        const body = JSON.parse(JSON.stringify(req.body)) 
+
+        let { StartDate, Endate, Pword} = body
+
+        //Checking if any of feild is missing
+        let { UserEmail , pWord} = body
+
+        //Checking if any of feild is missing
+        const missing = []
+        if(!UserEmail || UserEmail == '' || !validator.isEmail(UserEmail)){
+            missing.push('UserEmail')
+        }
+        if(!pWord || pWord == ''){
+            missing.push('pWord')
+        }
+
+        //If anything missing sending it back to user with error
+        if(missing.length){
+            return res.status(403).send({
+                error:{
+                    message:'Error/missing feilds',
+                    missing,
+                },
+                data:req.body
+            })
+        }
+
+        //bcrypting password
+        Pword = await bcryptPass(Pword)
+        const query = `
+            CALL GetOpinionRequests(?,?,@status);
+            Select @status;
+            Select * from TempAddedPostImages;
+        `
+        const data = [UserEmail.toString(), pWord.toString()]
+        DBProcedure(query,data, (error, results) => {
+            if(error){
+                return res.status(error.status).send(error.response)
+            }
+
+            res.send({
+                status: results[1][0]['@status'],
+                TempAddedPostImages: results[2]
+            })
+        })
+
+    } catch(e) {
+        //Network or internal errors
+        console.log(e)
+        res.status(500).send({error:{message:"API internal error, refer console for more information."}})
+    }
+})
+
 module.exports = router
