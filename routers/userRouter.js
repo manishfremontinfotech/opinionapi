@@ -1758,7 +1758,9 @@ router.post('/getOpinionRequests', async (req, res) => {
         const query = `
             CALL GetOpinionRequests(?,?,@status);
             Select @status;
-            Select * from TempAddedPostImages;
+            Select * from  TempOpinionRequests ;
+            Select * from  TempOwnResponses ;
+            Select * from  TempAddedPostImages;
         `
         const data = [UserEmail.toString(), pWord.toString()]
         DBProcedure(query,data, (error, results) => {
@@ -1768,7 +1770,9 @@ router.post('/getOpinionRequests', async (req, res) => {
 
             res.send({
                 status: results[1][0]['@status'],
-                TempAddedPostImages: results[2]
+                TempOpinionRequests: results[2],
+                TempOwnResponses: results[3],
+                TempAddedPostImages: results[4]
             })
         })
 
