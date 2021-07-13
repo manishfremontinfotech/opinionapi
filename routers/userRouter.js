@@ -547,7 +547,7 @@ router.post('/addResponse', imageUpload, async (req, res) => {
             })
         }
 
-        let Attachment
+        let Attachment = "NULL"
         if(file) {
             const [s3data, error] = await upload_to_S3(req.file, false)
             if(error){
@@ -558,7 +558,7 @@ router.post('/addResponse', imageUpload, async (req, res) => {
                     }
                 })
             }
-            Attachment = s3data.Location || "NULL"
+            Attachment = s3data.Location
         }
 
         Rating = Rating || "NULL"
@@ -568,7 +568,7 @@ router.post('/addResponse', imageUpload, async (req, res) => {
         Pword = await bcryptPass(Pword)
         //calling database
         const query = `CALL AddResponse(?, ?, ?, ?, ?, ?, @status, @NotiToakn, @message); SELECT @status, @NotiToakn, @message;`
-        const data = [UserEmail.toString(), postId.toString(), Number(Rating), Comment.toString(), Attachment.toString(), Pword.toString()]
+        const data = [UserEmail.toString(), Number(postId), Number(Rating), Comment.toString(), Attachment.toString(), Pword.toString()]
         
         DBProcedure(query, data, (error, results) => {
             if(error){
