@@ -552,8 +552,8 @@ router.post('/addResponse', imageUpload, async (req, res) => {
             uploadData = await upload_to_S3(req.file, false)
         }
 
-        const [s3data, error] = uploadData
-        if(error){
+        // const [s3data, error] = uploadData
+        if(uploadData[1]){
             return res.status(502).send({
                 error:{
                     message:'Fail to upload image to storage.',
@@ -564,7 +564,7 @@ router.post('/addResponse', imageUpload, async (req, res) => {
 
         Rating = Rating || "NULL"
         Comment = Comment || "NULL"
-        const Attachment = s3data.Location || "NULL"
+        const Attachment = uploadData[0].Location || "NULL"
         
         //bcrypting password
         Pword = await bcryptPass(Pword)
