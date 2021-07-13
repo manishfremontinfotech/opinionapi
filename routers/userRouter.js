@@ -501,10 +501,11 @@ router.post('/addPost', imageUpload, async (req, res) => {
 // ******************************************************************************
 //uncomment attachment code
 //for fututre
-router.post('/addResponse', /* imageUpload, */ async (req, res) => {
+router.post('/addResponse', imageUpload, async (req, res) => {
     try{
         
         const body = JSON.parse(JSON.stringify(req.body)) 
+        const file = req.file
 
         let { UserEmail, postId, Rating, Comment, Pword} = body
 
@@ -515,18 +516,22 @@ router.post('/addResponse', /* imageUpload, */ async (req, res) => {
         if(!UserEmail || UserEmail == '' || !validator.isEmail(UserEmail)){
             missing.push('UserEmail')
         }
+
+        if(!Rating && !Comment && !file){
+            missing.push('Rating, comment or file missing')
+        }
         if(!postId || !validator.isNumeric(postId.toString())){
             missing.push('postId')
         }
-        if(!Rating || !validator.isNumeric(Rating.toString())){
+        if(Rating && !validator.isNumeric(Rating.toString())){
             missing.push('Rating')
         }
-        if(!Comment || Comment == ''){
+        if(Comment && Comment == ''){
             missing.push('Comment')
         }
-        // if(!req.file || req.imageUploadError){
-        //     missing.push('Attachment')
-        // }
+        if(req.file && req.imageUploadError){
+            missing.push('Attachment')
+        }
         if(!Pword || Pword == ''){
             missing.push('Pword')
         }
@@ -542,7 +547,13 @@ router.post('/addResponse', /* imageUpload, */ async (req, res) => {
             })
         }
 
-        const Attachment = "http://xxxxxxxxx"
+        if(req.file){
+            const [s3data, error] = await upload_to_S3(req.file, false)
+        }
+
+        Rating = Rating || "NULL"
+        Comment = Comment || "NULL"
+        const Attachment = s3data.Location || "NULL"
         
         //bcrypting password
         Pword = await bcryptPass(Pword)
