@@ -547,12 +547,12 @@ router.post('/addResponse', imageUpload, async (req, res) => {
             })
         }
 
-        let data
+        let uploadData
         if(file) {
-            data = await upload_to_S3(req.file, false)
+            uploadData = await upload_to_S3(req.file, false)
         }
 
-        const [s3data, error] = data
+        const [s3data, error] = uploadData
         if(error){
             return res.status(502).send({
                 error:{
