@@ -509,8 +509,6 @@ router.post('/addResponse', imageUpload, async (req, res) => {
 
         let { UserEmail, postId, Rating, Comment, Pword} = body
 
-        Comment = sanitizeHtml(Comment)
-
         //Checking if any of feild is missing
         const missing = []
         if(!UserEmail || UserEmail == '' || !validator.isEmail(UserEmail)){
