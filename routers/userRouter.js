@@ -547,8 +547,19 @@ router.post('/addResponse', imageUpload, async (req, res) => {
             })
         }
 
-        if(req.file){
-            const [s3data, error] = await upload_to_S3(req.file, false)
+        let data
+        if(file) {
+            data = await upload_to_S3(req.file, false)
+        }
+
+        const [s3data, error] = data
+        if(error){
+            return res.status(502).send({
+                error:{
+                    message:'Fail to upload image to storage.',
+                    missing
+                }
+            })
         }
 
         Rating = Rating || "NULL"
