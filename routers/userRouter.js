@@ -559,7 +559,7 @@ router.post('/addResponse', imageUpload, async (req, res) => {
             Attachment = s3data.Location
         }
 
-        Rating = Rating || "NULL"
+        Rating = Rating || 0
         Comment = Comment || "NULL"
         
         //bcrypting password
