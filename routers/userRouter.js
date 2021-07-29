@@ -231,7 +231,7 @@ router.post('/addFriend', async (req, res) => {
         if(!UserEmail || UserEmail == '' || !validator.isEmail(UserEmail)){
             missing.push('UserEmail')
         }
-        if(!FriendEmail || FriendEmail == '' || !validator.isEmail(FriendEmail)){
+        if(!FriendEmail || FriendEmail == '' /* || !validator.isEmail(FriendEmail) */){
             missing.push('FriendEmail')
         }
         if(!Pword || Pword == '' || Pword == 'undefined'){
@@ -304,7 +304,7 @@ router.post('/addFriendRequest', async (req, res) => {
         if(!UserEmail || UserEmail == '' || !validator.isEmail(UserEmail)){
             missing.push('UserEmail')
         }
-        if(!FriendEmail || FriendEmail == '' || !validator.isEmail(FriendEmail)){
+        if(!FriendEmail || FriendEmail == '' /*|| !validator.isEmail(FriendEmail)*/){
             missing.push('FriendEmail')
         }
         if(!Pword || Pword == '' || Pword == 'undefined'){
@@ -632,7 +632,7 @@ router.post('/cancelFriendRequest', async (req, res) => {
         if(!UserEmail || UserEmail == '' || !validator.isEmail(UserEmail)){
             missing.push('UserEmail')
         }
-        if(!FriendEmail || FriendEmail == '' || !validator.isEmail(FriendEmail)){
+        if(!FriendEmail || FriendEmail == '' /* || !validator.isEmail(FriendEmail) */){
             missing.push('FriendEmail')
         }
         if(!Pword || Pword == '' || Pword == 'undefined'){
@@ -962,7 +962,7 @@ router.post('/rejectFriendRequest', async (req, res) => {
         if(!UserEmail || UserEmail == '' || !validator.isEmail(UserEmail)){
             missing.push('UserEmail')
         }
-        if(!FriendEmail || FriendEmail == '' || !validator.isEmail(FriendEmail)){
+        if(!FriendEmail || FriendEmail == '' /*|| !validator.isEmail(FriendEmail) */){
             missing.push('FriendEmail')
         }
         if(!Pword || Pword == '' || Pword == 'undefined'){
@@ -1035,7 +1035,7 @@ router.post('/removeFriend', async (req, res) => {
         if(!UserEmail || UserEmail == '' || !validator.isEmail(UserEmail)){
             missing.push('UserEmail')
         }
-        if(!FriendEmail || FriendEmail == '' || !validator.isEmail(FriendEmail)){
+        if(!FriendEmail || FriendEmail == '' /*|| !validator.isEmail(FriendEmail)*/){
             missing.push('FriendEmail')
         }
         if(!Pword || Pword == '' || Pword == 'undefined'){
