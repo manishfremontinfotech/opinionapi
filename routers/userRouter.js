@@ -374,27 +374,42 @@ router.post('/addPost', imageUpload, async (req, res) => {
 
         //Checking if any of feild is missing
         const missing = []
+        // if(!UserEmail || UserEmail == '' || !validator.isEmail(UserEmail)){
+        //     missing.push('UserEmail')
+        // }
+        // if(!Question || Question == ''){
+        //     missing.push('Question')
+        // }
+        // if(!Rating || !validator.isNumeric(Rating)){
+        //     missing.push('Rating')
+        // }
+        // if(!Comment || Comment == ''){
+        //     missing.push('Comment')
+        // }
+        // if(!req.file || req.imageUploadError){
+        //     missing.push('Photo')
+        // }
+        // if(!Pword || Pword == ''){
+        //     missing.push('Pword')
+        // }
         if(!UserEmail || UserEmail == '' || !validator.isEmail(UserEmail)){
             missing.push('UserEmail')
-        }
-        // if(!PhotoLink || PhotoLink == '' /* ||!validator.isURL(PhotoLink) */){
-        //     missing.push('PhotoLink')
-        // }
-        if(!Question || Question == ''){
-            missing.push('Question')
-        }
-        if(!Rating || !validator.isNumeric(Rating)){
-            missing.push('Rating')
-        }
-        if(!Comment || Comment == ''){
-            missing.push('Comment')
-        }
-        if(!req.file || req.imageUploadError){
-            missing.push('Photo')
         }
         if(!Pword || Pword == ''){
             missing.push('Pword')
         }
+        if(!req.file && !Question){
+            missing.push('Either proide a question or image.')
+        }
+        if(Rating && !validator.isNumeric(Rating)){
+            missing.push('Rating Should be numeric')
+        }
+
+        Question = Question || "NULL"
+        Rating = Rating || 5
+        
+        Comment = Comment || "NULL"
+        emails = emails || []
 
         UserEmail = sanitizeHtml(UserEmail)
         Question = sanitizeHtml(Question)
@@ -411,18 +426,34 @@ router.post('/addPost', imageUpload, async (req, res) => {
             })
         }
 
+        let s3data = {
+            Location:"NULL"
+        }
+        if(req.file){
+            const uploadData = await upload_to_S3(req.file, true)
+            if(uploadData[1]){
+                return res.status(502).send({
+                    error:{
+                        message:'Fail to upload image to storage',
+                    }
+                })
+            } else {
+                s3data = uploadData[0]
+            }
+        }
+
         //resize image
        // req.file.buffer = await compressImage(req.file.buffer, 200, 200)
 
         /* Uplading to bucket S3 */
-        const [s3data, error] = await upload_to_S3(req.file, true)
-        if(error){
-            return res.status(502).send({
-                error:{
-                    message:'Fail to upload image to storage',
-                }
-            })
-        }
+        // const [s3data, error] = await upload_to_S3(req.file, true)
+        // if(error){
+        //     return res.status(502).send({
+        //         error:{
+        //             message:'Fail to upload image to storage',
+        //         }
+        //     })
+        // }
 
 
         const PhotoLink = s3data.Location
@@ -457,37 +488,39 @@ router.post('/addPost', imageUpload, async (req, res) => {
             //notificaiton to requested responders
             let emailProcedure = ``
             let data = []
-            emails.forEach(email => {
-                data.push(email.toString())
-                emailProcedure += `CALL AddRespondersToPosts(${PostId}, ?, @status, @NotiToakn, @message); SELECT @status, @NotiToakn, @message;`
-            })
-
-            DBProcedure(emailProcedure, data, (error, resultsArray) => {
-                if(error){
-                    return
-                }
-
-                    //firebase notification
-                for(let i = 1;i < resultsArray.length;i=i+2){
-                    //console.log("Inner Result :::: ", resultsArray[i][0])
-                    if(resultsArray[i][0]['@status'] == 1 && resultsArray[i][0]['@message'] && resultsArray[i][0]['@NotiToakn']){
-                        // ****************************** 
-                        //  Firebase Notification
-                        //  resultsArray[i][0]['@message']
-                        //  resultsArray[i][0]['@NotiToakn']
-                        //  ******************************
-                        const  registrationToken = resultsArray[i][0]['@NotiToakn']
-                        const message = {
-                                notification: {
-                                    title: "Friend Request",
-                                    body: "Friend Request"//resultsArray[i][0]['@message'].toString()
-                                }
-                            }
-        
-                        sendNotification(registrationToken, message)
+            if(emails.length){
+                emails.forEach(email => {
+                    data.push(email.toString())
+                    emailProcedure += `CALL AddRespondersToPosts(${PostId}, ?, @status, @NotiToakn, @message); SELECT @status, @NotiToakn, @message;`
+                })
+                
+                DBProcedure(emailProcedure, data, (error, resultsArray) => {
+                    if(error){
+                        return
                     }
-                } 
-            })
+
+                        //firebase notification
+                    for(let i = 1;i < resultsArray.length;i=i+2){
+                        //console.log("Inner Result :::: ", resultsArray[i][0])
+                        if(resultsArray[i][0]['@status'] == 1 && resultsArray[i][0]['@message'] && resultsArray[i][0]['@NotiToakn']){
+                            // ****************************** 
+                            //  Firebase Notification
+                            //  resultsArray[i][0]['@message']
+                            //  resultsArray[i][0]['@NotiToakn']
+                            //  ******************************
+                            const  registrationToken = resultsArray[i][0]['@NotiToakn']
+                            const message = {
+                                    notification: {
+                                        title: "Friend Request",
+                                        body: "Friend Request"//resultsArray[i][0]['@message'].toString()
+                                    }
+                                }
+            
+                            sendNotification(registrationToken, message)
+                        }
+                    } 
+                })
+            }
 
         })
 
