@@ -1774,6 +1774,63 @@ router.post('/addImageToPost', imageUpload, async (req, res) => {
     }
 })
 
+router.post('/ChangeUserPostComments', async (req, res) => {
+    try{
+        const body = JSON.parse(JSON.stringify(req.body)) 
+        let { UserEmail, pWord, postId, Comment} = body
+
+        //Checking if any of feild is missing
+        const missing = []
+        
+        if(!UserEmail || UserEmail == '' || UserEmail == 'undefined'){
+            missing.push('UserEmail')
+        }
+        if(!pWord || pWord == ''){
+            missing.push('pWord')
+        }
+        if(!postId || postId == '' || !validator.isNumeric(postId.toString())){
+            missing.push('postId')
+        }
+        if(!Comment || Comment == ''){
+            missing.push('Comment')
+        }
+
+        //If anything missing sending it back to user with error
+        if(missing.length){
+            return res.status(400).send({
+                error:{
+                    message:'Error/missing feilds',
+                    missing
+                },
+                data:req.body
+            })
+        }
+
+        //bcrypting password
+        pWord = await bcryptPass(pWord)
+        //calling database
+        const query = `CALL ChangeUserPostComments(?,?,?,?, @status); Select @status;`
+        const data = [ UserEmail.toString(), pWord.toString(), Number(postId), Comment.toString()]
+
+        DBProcedure(query, data, (error, results) => {
+            if(error){
+                return res.status(error.status).send(error.response)
+            }
+
+            console.log(results, results[1][0])
+
+            res.send({ 
+                status:results[1][0]['@status']
+            })
+        })
+
+    } catch(e) {
+        //Network or internal errors
+        console.log(e)
+        res.status(500).send({error:{message:"API internal error, refer console for more information."}})
+    }
+})
+
 //*********************************************************************************************** */
 router.post('/getOpinionRequests', async (req, res) => {
     try{
