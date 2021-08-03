@@ -1922,7 +1922,7 @@ router.post('/removePost', async (req, res) => {
         }
 
         //bcrypting password
-        Pword = await bcryptPass(Pword)
+        pWord = await bcryptPass(pWord)
         const query = `
             CALL RemovePost(?,?,?,@status);
             Select @status;
