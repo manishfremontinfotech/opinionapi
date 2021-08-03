@@ -18,7 +18,7 @@ const imageUpload = require('../middleware/imageUpload')
 //const compressImage = require('../middleware/compressImage')
 
 //uncomment it when using notification
-//also uncomment the firebase setup 
+//also uncomment the firebase setup
 const sendNotification = require('../firebaseSetup/sendNotification')
 //generate unique link for verificaton
 const generateUUID = require('../middleware/randomVerificationString')
@@ -33,10 +33,10 @@ const { sendPassInEmail } = require('../middleware/sendPassInEmail')
 
 router.post('/addEmail', async (req, res) => {
     try{
-        const body = JSON.parse(JSON.stringify(req.body)) 
+        const body = JSON.parse(JSON.stringify(req.body))
 
         let { UserEmail, pWord} = body
-        
+
         //check if anything feild missing
         const missing = []
         if(!UserEmail || UserEmail == '' || !validator.isEmail(UserEmail)){
@@ -62,7 +62,7 @@ router.post('/addEmail', async (req, res) => {
         const LINK = await generateUUID()
         //bcrypting password
         pWord = await bcryptPass(pWord)
-        
+
 
         //calling database
         const query = `CALL AddEmail(?, ?, @status, ?, @msg); SELECT @status, @msg;`
@@ -84,7 +84,7 @@ router.post('/addEmail', async (req, res) => {
             })
 
         })
-    
+
     } catch(e) {
         //Network or internal errors
         console.log(e)
@@ -116,7 +116,7 @@ router.get('/verifyEmail/:link', async (req, res) => {
             res.send(success)
 
         })
-    
+
     } catch(e) {
         //Network or internal errors
         console.log(e)
@@ -127,10 +127,10 @@ router.get('/verifyEmail/:link', async (req, res) => {
 //*********************************************************************************************** */
 router.post('/addUser', imageUpload, async (req, res) => {
     try{
-        const body = JSON.parse(JSON.stringify(req.body)) 
+        const body = JSON.parse(JSON.stringify(req.body))
 
         let { UserEmail, UserName, Phone, CountryCode, Password} = body
-        
+
         //Checking if any of feild is missing
         const missing = []
 
@@ -210,7 +210,7 @@ router.post('/addUser', imageUpload, async (req, res) => {
             })
 
         })
-    
+
     } catch(e) {
         //Network or internal errors
         console.log(e)
@@ -221,8 +221,8 @@ router.post('/addUser', imageUpload, async (req, res) => {
 //*********************************************************************************************** */
 router.post('/addFriend', async (req, res) => {
     try{
-        
-        const body = JSON.parse(JSON.stringify(req.body)) 
+
+        const body = JSON.parse(JSON.stringify(req.body))
 
         let { UserEmail, FriendEmail, Pword} = body
 
@@ -254,19 +254,19 @@ router.post('/addFriend', async (req, res) => {
         //calling database
         const query = `CALL AddFriend(?, ?,@status, ?, @NotiToakn, @message); SELECT @status, @NotiToakn, @message;`
         const data = [UserEmail.toString(), FriendEmail.toString(), Pword.toString()]
-        
+
         DBProcedure(query, data, (error, results) => {
             if(error){
                 return res.status(error.status).send(error.response)
             }
 
-            res.send({ 
+            res.send({
                 status:results[1][0]['@status'],
             })
 
             //firebase notification
             if(results[1][0]['@status'] == 1 && results[1][0]['@message'] && results[1][0]['@NotiToakn']){
-                // ****************************** 
+                // ******************************
                 //  Firebase Notification
                 //  results[1][0]['@message']
                 //  results[1][0]['@NotiToakn']
@@ -294,8 +294,8 @@ router.post('/addFriend', async (req, res) => {
 //*********************************************************************************************** */
 router.post('/addFriendRequest', async (req, res) => {
     try{
-        
-        const body = JSON.parse(JSON.stringify(req.body)) 
+
+        const body = JSON.parse(JSON.stringify(req.body))
 
         let { UserEmail, FriendEmail, Pword} = body
 
@@ -327,19 +327,19 @@ router.post('/addFriendRequest', async (req, res) => {
         //calling database
         const query = `CALL AddFriendRequest(?,?,@status,?, @NotiToakn, @message); SELECT @status, @NotiToakn, @message;`
         const data = [UserEmail.toString(), FriendEmail.toString(), Pword.toString()]
-        
+
         DBProcedure(query, data, (error, results) => {
             if(error){
                 return res.status(error.status).send(error.response)
             }
 
-            res.send({ 
+            res.send({
                 status:results[1][0]['@status'],
             })
 
             //firebase notification
             if(results[1][0]['@status'] == 1 && results[1][0]['@message'] && results[1][0]['@NotiToakn']){
-                // ****************************** 
+                // ******************************
                 //  Firebase Notification
                 //  results[1][0]['@message']
                 //  results[1][0]['@NotiToakn']
@@ -355,7 +355,7 @@ router.post('/addFriendRequest', async (req, res) => {
                  sendNotification(registrationToken, message)
             }
 
-        })    
+        })
 
     } catch(e) {
         //Network or internal errors
@@ -367,7 +367,7 @@ router.post('/addFriendRequest', async (req, res) => {
 // ******************************************************************************
 router.post('/addPost', imageUpload, async (req, res) => {
     try{
-        const body = JSON.parse(JSON.stringify(req.body)) 
+        const body = JSON.parse(JSON.stringify(req.body))
         console.log(req.file)
 
         let { UserEmail , Question, Rating, Comment, Pword, emails} = body
@@ -407,14 +407,14 @@ router.post('/addPost', imageUpload, async (req, res) => {
 
         Question = Question || "NULL"
         Rating = Rating || 5
-        
+
         Comment = Comment || "NULL"
         emails = emails || []
 
         UserEmail = sanitizeHtml(UserEmail)
         Question = sanitizeHtml(Question)
         Comment = sanitizeHtml(Comment)
-        
+
         //If anything missing sending it back to user with error
         if(missing.length){
             return res.status(400).send({
@@ -482,7 +482,7 @@ router.post('/addPost', imageUpload, async (req, res) => {
             let PostId = results[1][0]['@lastId']
             res.send({
                 status: results[1][0]['@status'],
-		        PostId 
+		        PostId
             })
 
             //notificaiton to requested responders
@@ -493,7 +493,7 @@ router.post('/addPost', imageUpload, async (req, res) => {
                     data.push(email.toString())
                     emailProcedure += `CALL AddRespondersToPosts(${PostId}, ?, @status, @NotiToakn, @message); SELECT @status, @NotiToakn, @message;`
                 })
-                
+
                 DBProcedure(emailProcedure, data, (error, resultsArray) => {
                     if(error){
                         return
@@ -503,7 +503,7 @@ router.post('/addPost', imageUpload, async (req, res) => {
                     for(let i = 1;i < resultsArray.length;i=i+2){
                         //console.log("Inner Result :::: ", resultsArray[i][0])
                         if(resultsArray[i][0]['@status'] == 1 && resultsArray[i][0]['@message'] && resultsArray[i][0]['@NotiToakn']){
-                            // ****************************** 
+                            // ******************************
                             //  Firebase Notification
                             //  resultsArray[i][0]['@message']
                             //  resultsArray[i][0]['@NotiToakn']
@@ -515,10 +515,10 @@ router.post('/addPost', imageUpload, async (req, res) => {
                                         body: "Friend Request"//resultsArray[i][0]['@message'].toString()
                                     }
                                 }
-            
+
                             sendNotification(registrationToken, message)
                         }
-                    } 
+                    }
                 })
             }
 
@@ -536,8 +536,8 @@ router.post('/addPost', imageUpload, async (req, res) => {
 //for fututre
 router.post('/addResponse', imageUpload, async (req, res) => {
     try{
-        
-        const body = JSON.parse(JSON.stringify(req.body)) 
+
+        const body = JSON.parse(JSON.stringify(req.body))
         const file = req.file
 
         let { UserEmail, postId, Rating, Comment, Pword} = body
@@ -594,23 +594,23 @@ router.post('/addResponse', imageUpload, async (req, res) => {
 
         Rating = Rating || 0
         Comment = Comment || "NULL"
-        
+
         //bcrypting password
         Pword = await bcryptPass(Pword)
         //calling database
         const query = `CALL AddResponse(?, ?, ?, ?, ?, ?, @status, @NotiToakn, @message); SELECT @status, @NotiToakn, @message;`
         const data = [UserEmail.toString(), Number(postId), Number(Rating), Comment.toString(), Attachment.toString(), Pword.toString()]
-        
+
         DBProcedure(query, data, (error, results) => {
             if(error){
                 return res.status(error.status).send(error.response)
             }
 
-            res.send({ 
+            res.send({
                 status:results[1][0]['@status'],
             })
-            
-        }) 
+
+        })
 
     } catch(e) {
         //Network or internal errors
@@ -622,8 +622,8 @@ router.post('/addResponse', imageUpload, async (req, res) => {
 //*********************************************************************************************** */
 router.post('/cancelFriendRequest', async (req, res) => {
     try{
-        
-        const body = JSON.parse(JSON.stringify(req.body)) 
+
+        const body = JSON.parse(JSON.stringify(req.body))
 
         let { UserEmail, FriendEmail, Pword} = body
 
@@ -655,19 +655,19 @@ router.post('/cancelFriendRequest', async (req, res) => {
         //calling database
         const query = `CALL CancelFriendRequest(?,?,?,@status, @NotiToakn, @message); SELECT @status, @NotiToakn, @message`
         const data = [UserEmail.toString(),FriendEmail.toString(),Pword.toString()]
-        
+
         DBProcedure(query, data, (error, results) => {
             if(error){
                 return res.status(error.status).send(error.response)
             }
 
-            res.send({ 
+            res.send({
                 status:results[1][0]['@status'],
             })
 
             //firebase notification
             if(results[1][0]['@status'] == 1 && results[1][0]['@message'] && results[1][0]['@NotiToakn']){
-                // ****************************** 
+                // ******************************
                 //  Firebase Notification
                 //  results[1][0]['@message']
                 //  results[1][0]['@NotiToakn']
@@ -695,7 +695,7 @@ router.post('/cancelFriendRequest', async (req, res) => {
 //*********************************************************************************************** */
 router.post('/getResponseForAllPostsOfUser', async (req, res) => {
     try{
-        const body = JSON.parse(JSON.stringify(req.body)) 
+        const body = JSON.parse(JSON.stringify(req.body))
 
         let { UserEmail, Pword} = body
 
@@ -744,7 +744,7 @@ router.post('/getResponseForAllPostsOfUser', async (req, res) => {
                 })
             }
 	    console.log(results)
-            res.send({ 
+            res.send({
                 status:results[1][0]['@status'],
                 post:results[2],
                 responses: results[3],
@@ -762,7 +762,7 @@ router.post('/getResponseForAllPostsOfUser', async (req, res) => {
 // ****************************************************************************
 router.post('/getResponseForPost', async (req, res) => {
     try{
-        const body = JSON.parse(JSON.stringify(req.body)) 
+        const body = JSON.parse(JSON.stringify(req.body))
         let { PostId, UserEmail} = body
 
         //Checking if any of feild is missing
@@ -824,7 +824,7 @@ router.post('/getResponseForPost', async (req, res) => {
 //*********************************************************************************************** */
 router.post('/getUserFriends', async (req, res) => {
     try{
-        const body = JSON.parse(JSON.stringify(req.body)) 
+        const body = JSON.parse(JSON.stringify(req.body))
 
         let { UserEmail, Pword} = body
 
@@ -884,7 +884,7 @@ router.post('/getUserFriends', async (req, res) => {
 // ****************************************************************************
 router.post('/getUsers', async (req, res) => {
     try{
-        const body = JSON.parse(JSON.stringify(req.body)) 
+        const body = JSON.parse(JSON.stringify(req.body))
 
         let { FirstPara, Email, pWord, offset} = body
 
@@ -952,8 +952,8 @@ router.post('/getUsers', async (req, res) => {
 //*********************************************************************************************** */
 router.post('/rejectFriendRequest', async (req, res) => {
     try{
-        
-        const body = JSON.parse(JSON.stringify(req.body)) 
+
+        const body = JSON.parse(JSON.stringify(req.body))
 
         let { UserEmail, FriendEmail, Pword} = body
 
@@ -985,19 +985,19 @@ router.post('/rejectFriendRequest', async (req, res) => {
         //calling database
         const query = `CALL RejectFriendRequest(?,?,?,@status, @NotiToakn, @message); SELECT @status, @NotiToakn, @message;`
         const data = [UserEmail.toString(), FriendEmail.toString(), Pword.toString()]
-        
+
         DBProcedure(query,data, (error, results) => {
             if(error){
                 return res.status(error.status).send(error.response)
             }
 
             //console.log(results)
-            res.send({ 
+            res.send({
                 status:results[1][0]['@status'],
             })
 
             if(results[1][0]['@status'] == 1 && results[1][0]['@message'] && results[1][0]['@NotiToakn']){
-                // ****************************** 
+                // ******************************
                 //  Firebase Notification
                 //  results[1][0]['@message']
                 //  results[1][0]['@NotiToakn']
@@ -1025,8 +1025,8 @@ router.post('/rejectFriendRequest', async (req, res) => {
 //*********************************************************************************************** */
 router.post('/removeFriend', async (req, res) => {
     try{
-        
-        const body = JSON.parse(JSON.stringify(req.body)) 
+
+        const body = JSON.parse(JSON.stringify(req.body))
 
         let { UserEmail, FriendEmail, Pword} = body
 
@@ -1058,19 +1058,19 @@ router.post('/removeFriend', async (req, res) => {
         //calling database
         const query = `CALL RemoveFriend(?,?,?,@status, @NotiToakn, @message); SELECT @status, @NotiToakn, @message;`
         const data = [UserEmail.toString(), FriendEmail.toString(), Pword.toString()]
-        
+
         DBProcedure(query,data, (error, results) => {
             if(error){
                 return res.status(error.status).send(error.response)
             }
 
-            res.send({ 
+            res.send({
                 status:results[1][0]['@status'],
             })
 
             //firebase notificaiton
             if(results[1][0]['@status'] == 1 && results[1][0]['@message'] && results[1][0]['@NotiToakn']){
-                // ****************************** 
+                // ******************************
                 //  Firebase Notification
                 //  results[1][0]['@message']
                 //  results[1][0]['@NotiToakn']
@@ -1098,7 +1098,7 @@ router.post('/removeFriend', async (req, res) => {
 //*********************************************************************************************** */
 router.post('/removeUser', async (req, res) => {
     try{
-        const body = JSON.parse(JSON.stringify(req.body)) 
+        const body = JSON.parse(JSON.stringify(req.body))
 
         let { UserEmail, Pword} = body
 
@@ -1134,7 +1134,7 @@ router.post('/removeUser', async (req, res) => {
             }
 
             //console.log(results)
-            res.send({ 
+            res.send({
                 status:results[1][0]['@status'],
             })
         })
@@ -1149,7 +1149,7 @@ router.post('/removeUser', async (req, res) => {
 //*********************************************************************************************** */
 router.post('/getUserProfile', async (req, res) => {
     try{
-        const body = JSON.parse(JSON.stringify(req.body)) 
+        const body = JSON.parse(JSON.stringify(req.body))
 
         let { UserSingUpId, pWord} = body
 
@@ -1207,7 +1207,7 @@ router.post('/getUserProfile', async (req, res) => {
 //*********************************************************************************************** */
 router.post('/getAnalyticsData', async (req, res) => {
     try{
-        const body = JSON.parse(JSON.stringify(req.body)) 
+        const body = JSON.parse(JSON.stringify(req.body))
 
         let { StartDate, Endate, Pword} = body
 
@@ -1262,7 +1262,7 @@ router.post('/getAnalyticsData', async (req, res) => {
 
 router.post('/addPushNotificationToken', async (req, res) => {
     try{
-        const body = JSON.parse(JSON.stringify(req.body)) 
+        const body = JSON.parse(JSON.stringify(req.body))
 
         let { UserEmail, pWord, Token} = body
         //check if anything feild missing
@@ -1305,7 +1305,7 @@ router.post('/addPushNotificationToken', async (req, res) => {
             })
 
         })
-    
+
     } catch(e) {
         //Network or internal errors
         console.log(e)
@@ -1315,7 +1315,7 @@ router.post('/addPushNotificationToken', async (req, res) => {
 
 router.post('/changePassword', async (req, res) => {
     try{
-        const body = JSON.parse(JSON.stringify(req.body)) 
+        const body = JSON.parse(JSON.stringify(req.body))
 
         let { UserEmail, oldPword, NewPword} = body
 
@@ -1358,7 +1358,7 @@ router.post('/changePassword', async (req, res) => {
             })
 
         })
-    
+
     } catch(e) {
         //Network or internal errors
         console.log(e)
@@ -1368,7 +1368,7 @@ router.post('/changePassword', async (req, res) => {
 
 router.post('/forgotPassword', async (req, res) => {
     try{
-        const body = JSON.parse(JSON.stringify(req.body)) 
+        const body = JSON.parse(JSON.stringify(req.body))
 
         let { UserEmail} = body
 
@@ -1406,7 +1406,7 @@ router.post('/forgotPassword', async (req, res) => {
             })
 
         })
-    
+
     } catch(e) {
         //Network or internal errors
         console.log(e)
@@ -1419,7 +1419,7 @@ router.post('/forgotPassword', async (req, res) => {
 router.post('/UpdateUser', imageUpload, async (req, res) => {
     try{
 
-        const body = JSON.parse(JSON.stringify(req.body)) 
+        const body = JSON.parse(JSON.stringify(req.body))
 
         let { name, userNewEmail, userNewPhone, userNewName, userOldEmail, userNewPassword, userNewCountryCode, pWord } = body
         UserName = sanitizeHtml(userNewName)
@@ -1485,7 +1485,7 @@ router.post('/UpdateUser', imageUpload, async (req, res) => {
         //calling database
         const query = `CALL UpdateUser(?,?,?,?, ?, ?, ?, ?, ?, @status);Select @status`
         const data = [name.toString(),userNewEmail.toString(),userNewPhoto.toString(),userNewPhone.toString(), userNewName.toString(), userOldEmail.toString(), userNewPassword.toString(), Number(userNewCountryCode), pWord.toString()]
-        
+
         DBProcedure(query, data, (error, results) => {
             if(error){
                 //deleteing from bucket if any error occur
@@ -1494,7 +1494,7 @@ router.post('/UpdateUser', imageUpload, async (req, res) => {
             }
 
             //console.log(results)
-            res.send({ 
+            res.send({
                 status:results[1][0]['@status'],
             })
         })
@@ -1509,13 +1509,13 @@ router.post('/UpdateUser', imageUpload, async (req, res) => {
 router.post('/UpdateUserProfilePhoto', imageUpload, async (req, res) => {
     try{
 
-        const body = JSON.parse(JSON.stringify(req.body)) 
+        const body = JSON.parse(JSON.stringify(req.body))
 
         let { UserEmail, pWord} = body
 
         //Checking if any of feild is missing
         const missing = []
-        
+
         if(!UserEmail || UserEmail == '' || UserEmail == 'undefined'){
             missing.push('UserEmail')
         }
@@ -1566,7 +1566,7 @@ router.post('/UpdateUserProfilePhoto', imageUpload, async (req, res) => {
             }
 
             //console.log(results)
-            res.send({ 
+            res.send({
                 status:results[1][0]['@status']
             })
         })
@@ -1582,12 +1582,12 @@ router.post('/UpdateUserPhone', async (req, res) => {
     try{
 
         console.log('Here')
-        const body = JSON.parse(JSON.stringify(req.body)) 
+        const body = JSON.parse(JSON.stringify(req.body))
         let { UserEmail, pWord, phone, country} = body
 
         //Checking if any of feild is missing
         const missing = []
-        
+
         if(!UserEmail || UserEmail == '' || UserEmail == 'undefined'){
             missing.push('UserEmail')
         }
@@ -1625,7 +1625,7 @@ router.post('/UpdateUserPhone', async (req, res) => {
 
             console.log(results, results[1][0])
 
-            res.send({ 
+            res.send({
                 status:results[1][0]['@status']
             })
         })
@@ -1640,13 +1640,13 @@ router.post('/UpdateUserPhone', async (req, res) => {
 router.post('/UpdateUserName', async (req, res) => {
     try{
 
-        const body = JSON.parse(JSON.stringify(req.body)) 
+        const body = JSON.parse(JSON.stringify(req.body))
 
         let { UserEmail, pWord, NewName} = body
 
         //Checking if any of feild is missing
         const missing = []
-        
+
         if(!UserEmail || UserEmail == '' || UserEmail == 'undefined'){
             missing.push('UserEmail')
         }
@@ -1698,7 +1698,7 @@ router.post('/UpdateUserName', async (req, res) => {
 // ******************************************************************************
 router.post('/addImageToPost', imageUpload, async (req, res) => {
     try{
-        const body = JSON.parse(JSON.stringify(req.body)) 
+        const body = JSON.parse(JSON.stringify(req.body))
 
         let { UserEmail , pWord, postId} = body
 
@@ -1713,7 +1713,7 @@ router.post('/addImageToPost', imageUpload, async (req, res) => {
         if(!postId || !validator.isNumeric(postId)){
             missing.push('postId')
         }
-        
+
         //If anything missing sending it back to user with error
         if(missing.length){
             return res.status(400).send({
@@ -1776,12 +1776,12 @@ router.post('/addImageToPost', imageUpload, async (req, res) => {
 
 router.post('/ChangeUserPostComments', async (req, res) => {
     try{
-        const body = JSON.parse(JSON.stringify(req.body)) 
+        const body = JSON.parse(JSON.stringify(req.body))
         let { UserEmail, pWord, postId, Comment} = body
 
         //Checking if any of feild is missing
         const missing = []
-        
+
         if(!UserEmail || UserEmail == '' || UserEmail == 'undefined'){
             missing.push('UserEmail')
         }
@@ -1819,7 +1819,7 @@ router.post('/ChangeUserPostComments', async (req, res) => {
 
             console.log(results, results[1][0])
 
-            res.send({ 
+            res.send({
                 status:results[1][0]['@status']
             })
         })
@@ -1834,7 +1834,7 @@ router.post('/ChangeUserPostComments', async (req, res) => {
 //*********************************************************************************************** */
 router.post('/getOpinionRequests', async (req, res) => {
     try{
-        const body = JSON.parse(JSON.stringify(req.body)) 
+        const body = JSON.parse(JSON.stringify(req.body))
 
         let { StartDate, Endate, Pword} = body
 
@@ -1881,6 +1881,60 @@ router.post('/getOpinionRequests', async (req, res) => {
                 TempOpinionRequests: results[2],
                 TempOwnResponses: results[3],
                 TempAddedPostImages: results[4]
+            })
+        })
+
+    } catch(e) {
+        //Network or internal errors
+        console.log(e)
+        res.status(500).send({error:{message:"API internal error, refer console for more information."}})
+    }
+})
+
+router.post('/removePost', async (req, res) => {
+    try{
+        const body = JSON.parse(JSON.stringify(req.body))
+
+        //Checking if any of feild is missing
+        let { UserEmail , pWord, postId} = body
+
+        //Checking if any of feild is missing
+        const missing = []
+        if(!UserEmail || UserEmail == '' || !validator.isEmail(UserEmail)){
+            missing.push('UserEmail')
+        }
+        if(!pWord || pWord == ''){
+            missing.push('pWord')
+        }
+        if(!postId || postId == '' || !validator.isNumeric(postId.toString())){
+            missing.push('postId')
+        }
+
+        //If anything missing sending it back to user with error
+        if(missing.length){
+            return res.status(403).send({
+                error:{
+                    message:'Error/missing feilds',
+                    missing,
+                },
+                data:req.body
+            })
+        }
+
+        //bcrypting password
+        Pword = await bcryptPass(Pword)
+        const query = `
+            CALL RemovePost(?,?,?,@status);
+            Select @status;
+        `
+        const data = [UserEmail.toString(), pWord.toString(), Number(postId)]
+        DBProcedure(query,data, (error, results) => {
+            if(error){
+                return res.status(error.status).send(error.response)
+            }
+
+            res.send({
+                status: results[1][0]['@status']
             })
         })
 
