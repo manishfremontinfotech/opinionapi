@@ -723,10 +723,10 @@ router.post('/getResponseForAllPostsOfUser', async (req, res) => {
         Pword = await bcryptPass(Pword)
         const query = `
             CALL GetResponseForAllPostsOfUser(?, ?, @status); SELECT @status;
-            SELECT UserEmail, postId, photoLink, question, ownrating, OwnComments, NoOfResponses, time FROM TempUsersAllPosts WHERE UserEmail=?;
+            SELECT UserEmail, postId, photoLink, question, ownrating, OwnComments, NoOfResponses, time FROM TempUsersAllPosts WHERE UserEmail=? order by time desc;
             SELECT postId, ResponserEmail, Rating, Comment, time, attachment FROM TempResponses WHERE UserEmail=?;
             SELECT Email, PostId, photoLLink FROM TempAddedPostImages;
-            DELETE FROM TempUsersAllPosts WHERE UserEmail=?;
+            DELETE FROM TempUsersAllPosts WHERE UserEmail=? order by time desc;
             DELETE FROM TempResponses WHERE UserEmail=?;
             DELETE FROM TempAddedPostImages WHERE 1 = 1;
         `
