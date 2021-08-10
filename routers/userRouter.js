@@ -125,7 +125,7 @@ router.get('/verifyEmail/:link', async (req, res) => {
 })
 
 //*********************************************************************************************** */
-router.post('/addUser', imageUpload, async (req, res) => {
+router.post('/addUser', imageUpload.single('image'), async (req, res) => {
     try{
         const body = JSON.parse(JSON.stringify(req.body))
 
@@ -365,7 +365,7 @@ router.post('/addFriendRequest', async (req, res) => {
 })
 
 // ******************************************************************************
-router.post('/addPost', imageUpload, async (req, res) => {
+router.post('/addPost', imageUpload.single('image'), async (req, res) => {
     try{
         const body = JSON.parse(JSON.stringify(req.body))
         console.log(req.file)
@@ -534,7 +534,7 @@ router.post('/addPost', imageUpload, async (req, res) => {
 // ******************************************************************************
 //uncomment attachment code
 //for fututre
-router.post('/addResponse', imageUpload, async (req, res) => {
+router.post('/addResponse', imageUpload.single('image'), async (req, res) => {
     try{
 
         const body = JSON.parse(JSON.stringify(req.body))
@@ -1416,7 +1416,7 @@ router.post('/forgotPassword', async (req, res) => {
 
 
 // ***********************************************************************
-router.post('/UpdateUser', imageUpload, async (req, res) => {
+router.post('/UpdateUser', imageUpload.single('image'), async (req, res) => {
     try{
 
         const body = JSON.parse(JSON.stringify(req.body))
@@ -1506,7 +1506,7 @@ router.post('/UpdateUser', imageUpload, async (req, res) => {
     }
 })
 
-router.post('/UpdateUserProfilePhoto', imageUpload, async (req, res) => {
+router.post('/UpdateUserProfilePhoto', imageUpload.single('image'), async (req, res) => {
     try{
 
         const body = JSON.parse(JSON.stringify(req.body))
@@ -1696,7 +1696,7 @@ router.post('/UpdateUserName', async (req, res) => {
 
 
 // ******************************************************************************
-router.post('/addImageToPost', imageUpload, async (req, res) => {
+router.post('/addImageToPost', imageUpload.array('images'), async (req, res) => {
     try{
         const body = JSON.parse(JSON.stringify(req.body))
 
@@ -1713,6 +1713,9 @@ router.post('/addImageToPost', imageUpload, async (req, res) => {
         if(!postId || !validator.isNumeric(postId)){
             missing.push('postId')
         }
+        if(req.files.length == 0){
+            missing.push('images')
+        }
 
         //If anything missing sending it back to user with error
         if(missing.length){
@@ -1727,11 +1730,30 @@ router.post('/addImageToPost', imageUpload, async (req, res) => {
 
         //resize image
        // req.file.buffer = await compressImage(req.file.buffer, 200, 200)
+        let query = ""
+        let data = []
+        let Keys = []
+        let error_flag = false
+       for (let i = 0; i < req.files.length; i++) {
+           const element = req.files[i];
+           const [s3data, error] = await upload_to_S3(req.files[i], true)
+            if(error){
+                error_flag = true
+                break
+            } else {
+                query += `CALL AddImageToPost(?, ?, ?, ?, @status); SELECT @status;`
+                data.push(UserEmail.toString(),pWord.toString(), Number(postId), s3data.Location.toString())
+                Keys.push(s3data.Key)
+            }
 
-        /* Uplading to bucket S3 */
-        const [s3data, error] = await upload_to_S3(req.file, true)
-        if(error){
-            return res.status(502).send({
+       }
+
+       if(error_flag){
+           for (let i = 0; i < Keys.length; i++) {
+            delete_from_S3(Keys[i], true)
+           }
+
+           return res.status(502).send({
                 error:{
                     message:'Fail to upload image to storage',
                 }
@@ -1739,30 +1761,36 @@ router.post('/addImageToPost', imageUpload, async (req, res) => {
         }
 
 
-        const PhotoLink = s3data.Location
-
         //bcrypting password
         Pword = await bcryptPass(pWord)
         //calling database
-        const query = `CALL AddImageToPost(?, ?, ?, ?, @status); SELECT @status;`
-        const data = [UserEmail.toString(),pWord.toString(), Number(postId), PhotoLink.toString()]
 
         DBProcedure(query, data, (error, results) => {
             if(error){
-                delete_from_S3(s3data.Key, true)
+                for (let i = 0; i < Keys.length; i++) {
+                    delete_from_S3(Keys[i], true)
+                }
                 return res.status(error.status).send(error.response)
             }
 
+            let response = {} 
             //delete image form bucket if procedure failed
-            if(results[1][0]['@status'] != 1){
-                delete_from_S3(s3data.Key, true)
-                return res.send({
-                    status: results[1][0]['@status']
-                })
+            let j = 0
+            for (let i = 1; i < results.length; i=i+2) {
+                response[`${(j+1).toString()}`] = results[i][0]['@status']
+                if(results[i][0]['@status'] != 1){
+                    delete_from_S3(Keys[j], true)
+                }
+                j = j+1
             }
 
+            console.log(query)
+            console.log(data)
+            console.log(response)
+            console.log(results)
+
             res.send({
-                status: results[1][0]['@status']
+                status: response
             })
 
         })

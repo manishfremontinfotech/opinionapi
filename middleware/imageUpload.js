@@ -21,7 +21,7 @@ const imageUpload  = multer({
     fileFilter: function(req, file, cb){
         checkFileType(file, cb, req)
     }
-}).single('image') //this is name attribute of input in from where file is uploaded
+}) //this is name attribute of input in from where file is uploaded
 
 //checking file type
 //if error error is stored in req.imageUploadError
@@ -39,7 +39,7 @@ function checkFileType(file, cb, req){
         return cb(null, true)
     } else {
         req.imageUploadError = true
-        return cb(null, true)
+        return cb(null, false)
     }
 }
 

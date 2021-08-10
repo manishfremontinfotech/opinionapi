@@ -43,7 +43,6 @@ const upload_to_S3 = async (file, post) => {
     }
 
     return new Promise((resolve, reject) => {
-        console.log(params)
         s3.upload(params, (error, data) => {
             if(error){
                 console.log(error)
@@ -52,7 +51,6 @@ const upload_to_S3 = async (file, post) => {
             }
 
             delete s3
-            console.log(data)
             resolve([data, null])
         })
     })
@@ -74,7 +72,6 @@ const delete_from_S3 = (key, post) => {
         })
     }
 
-    console.log(key)
 
     let params
     if(post){
@@ -94,7 +91,6 @@ const delete_from_S3 = (key, post) => {
         if (data) {
             console.log("File deleted successfully");
             delete s3
-            console.log(data)
         }
         else {
             console.log("Check if you have sufficient permissions : "+err);
