@@ -1699,6 +1699,7 @@ router.post('/UpdateUserName', async (req, res) => {
 router.post('/addImageToPost', imageUpload.array('image'), async (req, res) => {
     try{
         const body = JSON.parse(JSON.stringify(req.body))
+        console.log(req.files)
 
         let { UserEmail , pWord, postId, comments, favourite} = body
 
@@ -1755,7 +1756,7 @@ router.post('/addImageToPost', imageUpload.array('image'), async (req, res) => {
             } else {
                 console.log()
                 query += `CALL AddImageToPost(?, ?, ?, ?, @status, ?, ?); SELECT @status;`
-                data.push(UserEmail.toString(),pWord.toString(), Number(postId), s3data.Location.toString(), comments[i].toString(), Boolean(favourite[i])?1:0)
+                data.push(UserEmail.toString(),pWord.toString(), Number(postId), s3data.Location.toString(), comments[i], Boolean(favourite[i])?1:0)
                 Keys.push(s3data.Key)
                 console.log({emai:UserEmail.toString(),pass: pWord.toString(), id: Number(postId), s3:s3data.Location.toString(), comme:comments[i], fav:Boolean(favourite[i])?1:0})
             }
