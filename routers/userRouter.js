@@ -1758,7 +1758,6 @@ router.post('/addImageToPost', imageUpload.array('image'), async (req, res) => {
                 query += `CALL AddImageToPost(?, ?, ?, ?, @status, ?, ?); SELECT @status;`
                 data.push(UserEmail.toString(),pWord.toString(), Number(postId), s3data.Location.toString(), comments[i], Boolean(favourite[i])?1:0)
                 Keys.push(s3data.Key)
-                console.log({emai:UserEmail.toString(),pass: pWord.toString(), id: Number(postId), s3:s3data.Location.toString(), comme:comments[i], fav:Boolean(favourite[i])?1:0})
             }
 
        }
