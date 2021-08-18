@@ -1717,7 +1717,7 @@ router.post('/addImageToPost', imageUpload.array('image'), async (req, res) => {
         if(comments && (!Array.isArray(comments) || comments.length == 0 || comments.length !=  req.files.length)){
             missing.push('comments')
         } else {
-            comments = new Array( req.files.length)
+            comments = comments || new Array( req.files.length)
         }
         if(req.files.length == 0){
             missing.push('images')
@@ -1725,7 +1725,7 @@ router.post('/addImageToPost', imageUpload.array('image'), async (req, res) => {
         if(favourite && (!Array.isArray(favourite) || favourite.length == 0 || favourite.length !=  req.files.length)){
             missing.push('favourite')
         } else {
-            favourite = new Array( req.files.length)
+            favourite = favourite || new Array( req.files.length)
         }
 
         //If anything missing sending it back to user with error
@@ -1739,6 +1739,7 @@ router.post('/addImageToPost', imageUpload.array('image'), async (req, res) => {
             })
         }
 
+        console.log()
         //resize image
        // req.file.buffer = await compressImage(req.file.buffer, 200, 200)
         let query = ""
@@ -1754,9 +1755,9 @@ router.post('/addImageToPost', imageUpload.array('image'), async (req, res) => {
             } else {
                 console.log()
                 query += `CALL AddImageToPost(?, ?, ?, ?, @status, ?, ?); SELECT @status;`
-                data.push(UserEmail.toString(),pWord.toString(), Number(postId), s3data.Location.toString(), comments[i], Boolean(favourite[i])?1:0)
+                data.push(UserEmail.toString(),pWord.toString(), Number(postId), s3data.Location.toString(), comments[i].toString(), Boolean(favourite[i])?1:0)
                 Keys.push(s3data.Key)
-                //console.log({emai:UserEmail.toString(),pass: pWord.toString(), id: Number(postId), s3:s3data.Location.toString(), comme:comments[i], fav:Boolean(favourite[i])?1:0})
+                console.log({emai:UserEmail.toString(),pass: pWord.toString(), id: Number(postId), s3:s3data.Location.toString(), comme:comments[i], fav:Boolean(favourite[i])?1:0})
             }
 
        }
@@ -1979,6 +1980,63 @@ router.post('/removePost', async (req, res) => {
 
             res.send({
                 status: results[1][0]['@status']
+            })
+        })
+
+    } catch(e) {
+        //Network or internal errors
+        console.log(e)
+        res.status(500).send({error:{message:"API internal error, refer console for more information."}})
+    }
+})
+
+router.post('/AddOpinionRequest', async (req, res) => {
+    try{
+
+        const body = JSON.parse(JSON.stringify(req.body))
+
+        let { UserEmail, pWord, NewName} = body
+
+        //Checking if any of feild is missing
+        const missing = []
+
+        if(!UserEmail || UserEmail == '' || UserEmail == 'undefined'){
+            missing.push('UserEmail')
+        }
+        if(!pWord || pWord == ''){
+            missing.push('pWord')
+        }
+        if(!NewName || NewName == ''){
+            missing.push('NewName')
+        }
+
+        //If anything missing sending it back to user with error
+        if(missing.length){
+            return res.status(400).send({
+                error:{
+                    message:'Error/missing feilds',
+                    missing
+                },
+                data:req.body
+            })
+        }
+
+        //bcrypting password
+        pWord = await bcryptPass(pWord)
+
+        console.log(UserEmail, pWord, NewName)
+        //calling database
+        const query = `CALL UpdateUserName(?,?,?, @success);Select @success;`
+        const data = [ UserEmail.toString(), pWord.toString(), NewName.toString()]
+
+        DBProcedure(query,data, (error, results) => {
+            if(error){
+                return res.status(error.status).send(error.response)
+            }
+
+            console.log(results)
+            res.send({
+                status:results[1][0]['@success']
             })
         })
 
