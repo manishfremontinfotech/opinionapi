@@ -1696,12 +1696,13 @@ router.post('/UpdateUserName', async (req, res) => {
 
 
 // ******************************************************************************
-router.post('/addImageToPost', imageUpload.array('images'), async (req, res) => {
+router.post('/addImageToPost', imageUpload.array('image'), async (req, res) => {
     try{
         const body = JSON.parse(JSON.stringify(req.body))
 
-        let { UserEmail , pWord, postId} = body
+        let { UserEmail , pWord, postId, comments, favourite} = body
 
+        //console.log( UserEmail , pWord, postId, comments, favourite)
         //Checking if any of feild is missing
         const missing = []
         if(!UserEmail || UserEmail == '' || !validator.isEmail(UserEmail)){
@@ -1713,8 +1714,18 @@ router.post('/addImageToPost', imageUpload.array('images'), async (req, res) => 
         if(!postId || !validator.isNumeric(postId)){
             missing.push('postId')
         }
+        if(comments && (!Array.isArray(comments) || comments.length == 0 || comments.length !=  req.files.length)){
+            missing.push('comments')
+        } else {
+            comments = new Array( req.files.length)
+        }
         if(req.files.length == 0){
             missing.push('images')
+        }
+        if(favourite && (!Array.isArray(favourite) || favourite.length == 0 || favourite.length !=  req.files.length)){
+            missing.push('favourite')
+        } else {
+            favourite = new Array( req.files.length)
         }
 
         //If anything missing sending it back to user with error
@@ -1741,12 +1752,17 @@ router.post('/addImageToPost', imageUpload.array('images'), async (req, res) => 
                 error_flag = true
                 break
             } else {
-                query += `CALL AddImageToPost(?, ?, ?, ?, @status); SELECT @status;`
-                data.push(UserEmail.toString(),pWord.toString(), Number(postId), s3data.Location.toString())
+                console.log()
+                query += `CALL AddImageToPost(?, ?, ?, ?, @status, ?, ?); SELECT @status;`
+                data.push(UserEmail.toString(),pWord.toString(), Number(postId), s3data.Location.toString(), comments[i], Boolean(favourite[i])?1:0)
                 Keys.push(s3data.Key)
+                //console.log({emai:UserEmail.toString(),pass: pWord.toString(), id: Number(postId), s3:s3data.Location.toString(), comme:comments[i], fav:Boolean(favourite[i])?1:0})
             }
 
        }
+
+       delete comments
+       delete favourite
 
        if(error_flag){
            for (let i = 0; i < Keys.length; i++) {
