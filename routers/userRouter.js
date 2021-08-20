@@ -2200,26 +2200,25 @@ router.post('/AddOpinionRequest', imageUpload.array('image'), async (req, res) =
     }
 })
 
-router.post('/AddOpinion', imageUpload.fields([{ name: 'attachment', maxCount: 1 }, { name: 'image' }]), async (req, res) => {
+router.post('/AddOpinion', imageUpload.single('attachment'), async (req, res) => {
     try{
-        console.log(req.files)
         const body = JSON.parse(JSON.stringify(req.body))
         let isAttachment = true;
-        const attachment = req.files['attachment']?req.files['attachment'][0]:[]
-        if(attachment){
+        const attachment = req.file
+        console.log(attachment)
+        if(!attachment){
             isAttachment = false
         }
         
-        const images = req.files['image']?req.files['image'][0]:[]
-        let { UserEmail, pWord, requestId, comment_array, favorite_array} = body
+        let { UserEmail, pWord, requestId, photoId_array, comments, favorite_array} = body
 
-        let imagelen = images.length, commentlen, favoritelen
-        if(!comment_array){
-            commentlen = 0
-        } else if(comment_array && !Array.isArray(comment_array)){
-            commentlen = 1
+        let photoIdlen, favoritelen
+        if(!photoId_array){
+            photoIdlen = 0
+        } else if(photoId_array && !Array.isArray(photoId_array)){
+            photoIdlen = 1
         } else {
-            commentlen = comment_array.length
+            photoIdlen = photoId_array.length
         }
         
         if(!favorite_array){
@@ -2230,8 +2229,7 @@ router.post('/AddOpinion', imageUpload.fields([{ name: 'attachment', maxCount: 1
             favoritelen = favorite_array.length
         }
 
-        const max_array_size = Math.max(commentlen, favoritelen)
-        let imageFlag = true
+        const max_array_size = Math.max(photoIdlen, favoritelen)
 
         //Checking if any of feild is missing
         const missing = []
@@ -2245,17 +2243,11 @@ router.post('/AddOpinion', imageUpload.fields([{ name: 'attachment', maxCount: 1
         if(!requestId || !validator.isNumeric(requestId.toString())){
             missing.push('requestId')
         }
-        if(images.length == 0){
-            imageFlag = false
-        }
         if(max_array_size == 0){
-            missing.push("Please one of images, comment_array or favourite_array")
+            missing.push("Please one of images, photoId_array or favourite_array")
         } else {
-            if(imagelen && imagelen != max_array_size ){
-                missing.push('images')
-            }
-            if(commentlen && commentlen != max_array_size){
-                missing.push('comment_array')
+            if(photoIdlen && photoIdlen != max_array_size){
+                missing.push('photoId_array')
             }
             if(favoritelen && favoritelen != max_array_size){
                 missing.push('favorite_array')
@@ -2273,10 +2265,10 @@ router.post('/AddOpinion', imageUpload.fields([{ name: 'attachment', maxCount: 1
             })
         }
 
-        if(max_array_size == 1 && !Array.isArray(comment_array)){
-            comment_array = Array(comment_array)
+        if(max_array_size == 1 && !Array.isArray(photoId_array)){
+            photoId_array = Array(photoId_array)
         } else {
-            comment_array = comment_array || new Array(max_array_size)
+            photoId_array = photoId_array || new Array(max_array_size)
         }
         if(max_array_size == 1 && !Array.isArray(favorite_array)){
             favorite_array = Array(favorite_array)
@@ -2290,7 +2282,7 @@ router.post('/AddOpinion', imageUpload.fields([{ name: 'attachment', maxCount: 1
         if(error){
             return res.status(502).send({
                 error:{
-                    message:'Fail to upload image to storage',
+                    message:'Fail to upload attachment to storage',
                 }
             })
         }
@@ -2298,34 +2290,13 @@ router.post('/AddOpinion', imageUpload.fields([{ name: 'attachment', maxCount: 1
         //calling database
         let query = ""
         let data = []
-        let Keys = []
-        let error_flag = false
         for (let i = 0; i < max_array_size; i++) {
-            const [s3data, error] = await( imageFlag?(upload_to_S3(images[i], true)):[{Location:null, Key:null}, null])
-            if(error){
-                error_flag = true
-                break
-            } else {
-                query += `CALL AddOpinion(?, ?, ?, ?, ?, ?, @status,  @NotiToakn, @message, ?); SELECT @status, @NotiToakn, @message;`
-                data.push(UserEmail.toString(),pWord.toString(), Number(requestId), Boolean(favorite_array[i])?1:0, comment_array[i], attachmentS3data.Location, s3data.Location)         
-                Keys.push(s3data.Key)
-            }
+            query += `CALL AddOpinion(?, ?, ?, ?, ?, ?, @status,  @NotiToakn, @message, ?); SELECT @status, @NotiToakn, @message;`
+            data.push(UserEmail.toString(),pWord.toString(), Number(requestId), Boolean(Number(favorite_array[i]))?1:0, comments, attachmentS3data.Location, photoId_array[i]?Number(photoId_array[i]):null)         
         }
 
-        delete comment_array
+        delete photoId_array
         delete favorite_array
-
-        if(error_flag){
-                    for (let i = 0; i < Keys.length; i++) {
-                        delete_from_S3(Keys[i], true)
-                    }
-
-                    return res.status(502).send({
-                            error:{
-                                message:'Fail to upload image to storage',
-                            }
-                        })
-                }
 
         DBProcedure(query, data, (error, resultsArray) => {
             if(error){
@@ -2337,15 +2308,9 @@ router.post('/AddOpinion', imageUpload.fields([{ name: 'attachment', maxCount: 1
             let j = 0
             for (let i = 1; i < resultsArray.length; i=i+2) {
                 response[`${(j+1).toString()}`] = resultsArray[i][0]['@status']
-                if(resultsArray[i][0]['@status'] != 1){
-                    delete_from_S3(Keys[j], true)
-                }
-                j = j+1
             }
 
             res.send(response)
-
-            
 
                 //firebase notification
             for(let i = 1;i < resultsArray.length;i=i+2){
