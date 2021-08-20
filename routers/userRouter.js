@@ -2102,7 +2102,7 @@ router.post('/AddOpinionRequest', imageUpload.array('image'), async (req, res) =
                     break
                 } else {
                     query += `CALL AddPhotoToOpinionRequest(?, ?, ?, ?, ?, ?, @status); SELECT @status;`
-                    data.push(UserEmail.toString(),pWord.toString(), Number(requestId), s3data.Location, comment_array[i], Boolean(favorite_array[i])?1:0)
+                    data.push(UserEmail.toString(),pWord.toString(), Number(requestId), s3data.Location, comment_array[i], Boolean(Number(favorite_array[i]))?1:0)
                     Keys.push(s3data.Key)
                 }
 
@@ -2150,7 +2150,7 @@ router.post('/AddOpinionRequest', imageUpload.array('image'), async (req, res) =
                     for (let i = 0; i < ResponserEmailId_array.length; i++) {
                         const email = ResponserEmailId_array[i];
                         emaildata.push(email.toString())
-                        emailProcedure += `CALL AddRespondersToPosts(${Number(requestId)}, ?, @status, @NotiToakn, @message); SELECT @status, @NotiToakn, @message;`
+                        emailProcedure += `CALL AddRespondersToRequests(${Number(requestId)}, ?, @status, @NotiToakn, @message); SELECT @status, @NotiToakn, @message;`
                     }
 
                     res.send(response)
