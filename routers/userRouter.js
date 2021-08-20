@@ -1701,9 +1701,9 @@ router.post('/addImageToPost', imageUpload.array('image'), async (req, res) => {
         const body = JSON.parse(JSON.stringify(req.body))
         console.log(req.files)
 
-        let { UserEmail , pWord, postId, comments, favourite} = body
+        let { UserEmail , pWord, postId, comments, favorite} = body
 
-        //console.log( UserEmail , pWord, postId, comments, favourite)
+        //console.log( UserEmail , pWord, postId, comments, favorite)
         //Checking if any of feild is missing
         const missing = []
         if(!UserEmail || UserEmail == '' || !validator.isEmail(UserEmail)){
@@ -1723,10 +1723,10 @@ router.post('/addImageToPost', imageUpload.array('image'), async (req, res) => {
         if(req.files.length == 0){
             missing.push('images')
         }
-        if(favourite && (!Array.isArray(favourite) || favourite.length == 0 || favourite.length !=  req.files.length)){
-            missing.push('favourite')
+        if(favorite && (!Array.isArray(favorite) || favorite.length == 0 || favorite.length !=  req.files.length)){
+            missing.push('favorite')
         } else {
-            favourite = favourite || new Array( req.files.length)
+            favorite = favorite || new Array( req.files.length)
         }
 
         //If anything missing sending it back to user with error
@@ -1747,7 +1747,7 @@ router.post('/addImageToPost', imageUpload.array('image'), async (req, res) => {
         let data = []
         let Keys = []
         let error_flag = false
-       for (let i = 0; i < req.files.length; i++) {
+        for (let i = 0; i < req.files.length; i++) {
            const element = req.files[i];
            const [s3data, error] = await upload_to_S3(req.files[i], true)
             if(error){
@@ -1756,14 +1756,14 @@ router.post('/addImageToPost', imageUpload.array('image'), async (req, res) => {
             } else {
                 console.log()
                 query += `CALL AddImageToPost(?, ?, ?, ?, @status, ?, ?); SELECT @status;`
-                data.push(UserEmail.toString(),pWord.toString(), Number(postId), s3data.Location.toString(), comments[i], Boolean(favourite[i])?1:0)
+                data.push(UserEmail.toString(),pWord.toString(), Number(postId), s3data.Location.toString(), comments[i], Boolean(favorite[i])?1:0)
                 Keys.push(s3data.Key)
             }
 
-       }
+        }
 
        delete comments
-       delete favourite
+       delete favorite
 
        if(error_flag){
            for (let i = 0; i < Keys.length; i++) {
@@ -1990,12 +1990,32 @@ router.post('/removePost', async (req, res) => {
     }
 })
 
-router.post('/AddOpinionRequest', async (req, res) => {
+router.post('/AddOpinionRequest', imageUpload.array('image'), async (req, res) => {
     try{
 
         const body = JSON.parse(JSON.stringify(req.body))
+        const images = req.files
+        let { UserEmail, pWord, question, comment, ResponserEmailId_array, comment_array, favorite_array } = body
 
-        let { UserEmail, pWord, NewName} = body
+        let imagelen = images.length, commentlen, favoritelen
+        if(!comment_array){
+            commentlen = 0
+        } else if(comment_array && !Array.isArray(comment_array)){
+            commentlen = 1
+        } else {
+            commentlen = comment_array.length
+        }
+        
+        if(!favorite_array){
+            favoritelen = 0
+        } else if(favorite_array && !Array.isArray(favorite_array)){
+            favoritelen = 1
+        } else {
+            favoritelen = favorite_array.length
+        }
+
+        const max_array_size = Math.max(imagelen, Math.max(commentlen, favoritelen)) 
+        let imageFlag = true
 
         //Checking if any of feild is missing
         const missing = []
@@ -2006,8 +2026,26 @@ router.post('/AddOpinionRequest', async (req, res) => {
         if(!pWord || pWord == ''){
             missing.push('pWord')
         }
-        if(!NewName || NewName == ''){
-            missing.push('NewName')
+        if(images.length == 0){
+            imageFlag = false
+        }
+        if(max_array_size == 0){
+            missing.push("Please one of images, comment_array or favourite_array")
+        } else {
+            if(imagelen && imagelen != max_array_size ){
+                missing.push('images')
+            }
+            if(commentlen && commentlen != max_array_size){
+                missing.push('comment_array')
+            }
+            if(favoritelen && favoritelen != max_array_size){
+                missing.push('favorite_array')
+            }
+        }
+        if(ResponserEmailId_array && !Array.isArray(ResponserEmailId_array)){
+            ResponserEmailId_array = Array(ResponserEmailId_array)
+        } else if(!ResponserEmailId_array) {
+            ResponserEmailId_array = []
         }
 
         //If anything missing sending it back to user with error
@@ -2021,23 +2059,138 @@ router.post('/AddOpinionRequest', async (req, res) => {
             })
         }
 
+        if(max_array_size == 1 && !Array.isArray(comment_array)){
+            comment_array = Array(comment_array)
+        } else {
+            comment_array = comment_array || new Array(max_array_size)
+        }
+        if(max_array_size == 1 && !Array.isArray(favorite_array)){
+            favorite_array = Array(favorite_array)
+        } else {
+            favorite_array = favorite_array || new Array(max_array_size)
+        }
+
         //bcrypting password
         pWord = await bcryptPass(pWord)
 
-        console.log(UserEmail, pWord, NewName)
         //calling database
-        const query = `CALL UpdateUserName(?,?,?, @success);Select @success;`
-        const data = [ UserEmail.toString(), pWord.toString(), NewName.toString()]
-
-        DBProcedure(query,data, (error, results) => {
+        const query1 = `CALL AddOpinionRequest(?,?,@requestId, ?, ?,  @success);Select @requestId, @success;`
+        const data1 = [ UserEmail.toString(), pWord.toString(), question, comment]
+        console.log({query1, data1})
+        DBProcedure(query1,data1, async (error, results) => {
             if(error){
                 return res.status(error.status).send(error.response)
             }
 
             console.log(results)
-            res.send({
-                status:results[1][0]['@success']
+            if(results[1][0]['@success'] != 1)
+                return res.send({
+                    status:results[1][0]['@success']
+                })
+
+            const requestId = results[1][0]['@requestId']
+            
+            let query = ""
+            let data = []
+            let Keys = []
+            let error_flag = false
+            for (let i = 0; i < max_array_size; i++) {
+                const [s3data, error] = await( imageFlag?(upload_to_S3(images[i], true)):[{Location:null, Key:null}, null])
+                console.log({i, s3data, error})
+                if(error){
+                    error_flag = true
+                    break
+                } else {
+                    query += `CALL AddPhotoToOpinionRequest(?, ?, ?, ?, ?, ?, @status); SELECT @status;`
+                    data.push(UserEmail.toString(),pWord.toString(), Number(requestId), s3data.Location, comment_array[i], Boolean(favorite_array[i])?1:0)
+                    Keys.push(s3data.Key)
+                }
+
+            }
+
+            delete comment_array
+            delete favorite_array
+
+            if(error_flag){
+                console.log(1)
+                for (let i = 0; i < Keys.length; i++) {
+                    delete_from_S3(Keys[i], true)
+                }
+
+                return res.status(502).send({
+                        error:{
+                            message:'Fail to upload image to storage',
+                        }
+                    })
+            }
+
+            console.log(2, {query, data})
+            DBProcedure(query, data, (error, results) => {
+                if(error){
+                    for (let i = 0; i < Keys.length; i++) {
+                        delete_from_S3(Keys[i], true)
+                    }
+                    return res.status(error.status).send(error.response)
+                }
+
+                let response = {} 
+                //delete image form bucket if procedure failed
+                let j = 0
+                for (let i = 1; i < results.length; i=i+2) {
+                    response[`${(j+1).toString()}`] = results[i][0]['@status']
+                    if(results[i][0]['@status'] != 1){
+                        delete_from_S3(Keys[j], true)
+                    }
+                    j = j+1
+                }
+
+                let emailProcedure = ``
+                let emaildata = []
+                if(ResponserEmailId_array.length){
+                    for (let i = 0; i < ResponserEmailId_array.length; i++) {
+                        const email = ResponserEmailId_array[i];
+                        emaildata.push(email.toString())
+                        emailProcedure += `CALL AddRespondersToPosts(${Number(requestId)}, ?, @status, @NotiToakn, @message); SELECT @status, @NotiToakn, @message;`
+                    }
+
+                    res.send(response)
+
+                    DBProcedure(emailProcedure, emaildata, (error, resultsArray) => {
+                        if(error){
+                            return
+                        }
+
+                        console.log(resultsArray)
+
+                            //firebase notification
+                        for(let i = 1;i < resultsArray.length;i=i+2){
+                            //console.log("Inner Result :::: ", resultsArray[i][0])
+                            console.log()
+                            if(resultsArray[i][0]['@status'] == 1 && resultsArray[i][0]['@message'] && resultsArray[i][0]['@NotiToakn']){
+                                // ******************************
+                                //  Firebase Notification
+                                //  resultsArray[i][0]['@message']
+                                //  resultsArray[i][0]['@NotiToakn']
+                                //  ******************************
+                                const  registrationToken = resultsArray[i][0]['@NotiToakn']
+                                const message = {
+                                        notification: {
+                                            title: "Opinion",
+                                            body: resultsArray[i][0]['@message']
+                                        }
+                                    }
+
+                                sendNotification(registrationToken, message)
+                            }
+                        }
+                    })
+                } else {
+                    res.send(response)
+                }
+
             })
+            
+
         })
 
     } catch(e) {
@@ -2046,5 +2199,182 @@ router.post('/AddOpinionRequest', async (req, res) => {
         res.status(500).send({error:{message:"API internal error, refer console for more information."}})
     }
 })
+
+router.post('/AddOpinion', imageUpload.fields([{ name: 'attachment', maxCount: 1 }, { name: 'image' }]), async (req, res) => {
+    try{
+        console.log(req.files)
+        const body = JSON.parse(JSON.stringify(req.body))
+        let isAttachment = true;
+        const attachment = req.files['attachment']?req.files['attachment'][0]:[]
+        if(attachment){
+            isAttachment = false
+        }
+        
+        const images = req.files['image']?req.files['image'][0]:[]
+        let { UserEmail, pWord, requestId, comment_array, favorite_array} = body
+
+        let imagelen = images.length, commentlen, favoritelen
+        if(!comment_array){
+            commentlen = 0
+        } else if(comment_array && !Array.isArray(comment_array)){
+            commentlen = 1
+        } else {
+            commentlen = comment_array.length
+        }
+        
+        if(!favorite_array){
+            favoritelen = 0
+        } else if(favorite_array && !Array.isArray(favorite_array)){
+            favoritelen = 1
+        } else {
+            favoritelen = favorite_array.length
+        }
+
+        const max_array_size = Math.max(commentlen, favoritelen)
+        let imageFlag = true
+
+        //Checking if any of feild is missing
+        const missing = []
+
+        if(!UserEmail || UserEmail == '' || UserEmail == 'undefined'){
+            missing.push('UserEmail')
+        }
+        if(!pWord || pWord == ''){
+            missing.push('pWord')
+        }
+        if(!requestId || !validator.isNumeric(requestId.toString())){
+            missing.push('requestId')
+        }
+        if(images.length == 0){
+            imageFlag = false
+        }
+        if(max_array_size == 0){
+            missing.push("Please one of images, comment_array or favourite_array")
+        } else {
+            if(imagelen && imagelen != max_array_size ){
+                missing.push('images')
+            }
+            if(commentlen && commentlen != max_array_size){
+                missing.push('comment_array')
+            }
+            if(favoritelen && favoritelen != max_array_size){
+                missing.push('favorite_array')
+            }
+        }
+
+        //If anything missing sending it back to user with error
+        if(missing.length){
+            return res.status(400).send({
+                error:{
+                    message:'Error/missing feilds',
+                    missing
+                },
+                data:req.body
+            })
+        }
+
+        if(max_array_size == 1 && !Array.isArray(comment_array)){
+            comment_array = Array(comment_array)
+        } else {
+            comment_array = comment_array || new Array(max_array_size)
+        }
+        if(max_array_size == 1 && !Array.isArray(favorite_array)){
+            favorite_array = Array(favorite_array)
+        } else {
+            favorite_array = favorite_array || new Array(max_array_size)
+        }
+
+        //bcrypting password
+        pWord = await bcryptPass(pWord)
+        const [attachmentS3data, error] = await isAttachment?(upload_to_S3(attachment, true)):[{Location:null, Key: null}, null]
+        if(error){
+            return res.status(502).send({
+                error:{
+                    message:'Fail to upload image to storage',
+                }
+            })
+        }
+
+        //calling database
+        let query = ""
+        let data = []
+        let Keys = []
+        let error_flag = false
+        for (let i = 0; i < max_array_size; i++) {
+            const [s3data, error] = await( imageFlag?(upload_to_S3(images[i], true)):[{Location:null, Key:null}, null])
+            if(error){
+                error_flag = true
+                break
+            } else {
+                query += `CALL AddOpinion(?, ?, ?, ?, ?, ?, @status,  @NotiToakn, @message, ?); SELECT @status, @NotiToakn, @message;`
+                data.push(UserEmail.toString(),pWord.toString(), Number(requestId), Boolean(favorite_array[i])?1:0, comment_array[i], attachmentS3data.Location, s3data.Location)         
+                Keys.push(s3data.Key)
+            }
+        }
+
+        delete comment_array
+        delete favorite_array
+
+        if(error_flag){
+                    for (let i = 0; i < Keys.length; i++) {
+                        delete_from_S3(Keys[i], true)
+                    }
+
+                    return res.status(502).send({
+                            error:{
+                                message:'Fail to upload image to storage',
+                            }
+                        })
+                }
+
+        DBProcedure(query, data, (error, resultsArray) => {
+            if(error){
+                return res.status(error.status).send(error.response)
+            }
+
+            let response = {} 
+                //delete image form bucket if procedure failed
+            let j = 0
+            for (let i = 1; i < resultsArray.length; i=i+2) {
+                response[`${(j+1).toString()}`] = resultsArray[i][0]['@status']
+                if(resultsArray[i][0]['@status'] != 1){
+                    delete_from_S3(Keys[j], true)
+                }
+                j = j+1
+            }
+
+            res.send(response)
+
+            
+
+                //firebase notification
+            for(let i = 1;i < resultsArray.length;i=i+2){
+                //console.log("Inner Result :::: ", resultsArray[i][0])
+                if(resultsArray[i][0]['@status'] == 1 && resultsArray[i][0]['@message'] && resultsArray[i][0]['@NotiToakn']){
+                    // ******************************
+                    //  Firebase Notification
+                    //  resultsArray[i][0]['@message']
+                    //  resultsArray[i][0]['@NotiToakn']
+                    //  ******************************
+                    const  registrationToken = resultsArray[i][0]['@NotiToakn']
+                    const message = {
+                            notification: {
+                                title: "Opinion",
+                                body: resultsArray[i][0]['@message'].toString()
+                            }
+                        }
+
+                    sendNotification(registrationToken, message)
+                }
+            }
+        })
+
+    } catch(e) {
+        //Network or internal errors
+        console.log(e)
+        res.status(500).send({error:{message:"API internal error, refer console for more information."}})
+    }
+})
+
 
 module.exports = router

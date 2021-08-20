@@ -35,7 +35,7 @@ function checkFileType(file, cb, req){
     const mimeType = fileTypes.test(file.mimetype)
 
     if(mimeType && extname){
-        file.fileExtension = path.extname(file.originalname).toLowerCase()
+        file.fileExtension = file?path.extname(file.originalname).toLowerCase():null
         return cb(null, true)
     } else {
         req.imageUploadError = true
