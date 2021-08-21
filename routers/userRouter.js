@@ -2133,7 +2133,9 @@ router.post('/AddOpinionRequest', imageUpload.array('image'), async (req, res) =
                     return res.status(error.status).send(error.response)
                 }
 
-                let response = {} 
+                let response = {
+                    requestId: requestId
+                } 
                 //delete image form bucket if procedure failed
                 let j = 0
                 for (let i = 1; i < results.length; i=i+2) {
@@ -2265,6 +2267,8 @@ router.post('/AddOpinion', imageUpload.single('attachment'), async (req, res) =>
             })
         }
 
+        console.log(photoId_array)
+
         if(max_array_size == 1 && !Array.isArray(photoId_array)){
             photoId_array = Array(photoId_array)
         } else {
@@ -2286,6 +2290,8 @@ router.post('/AddOpinion', imageUpload.single('attachment'), async (req, res) =>
                 }
             })
         }
+
+
 
         //calling database
         let query = ""
