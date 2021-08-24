@@ -1204,6 +1204,17 @@ router.post('/getUserProfile', async (req, res) => {
 })
 
 
+router.get('/getAnalyticsData', async (req, res) => {
+    try{
+        res.sendFile('analytics.html', {root: __dirname })
+
+    } catch(e) {
+        //Network or internal errors
+        console.log(e)
+        res.status(500).send({error:{message:"API internal error, refer console for more information."}})
+    }
+})
+
 //*********************************************************************************************** */
 router.post('/getAnalyticsData', async (req, res) => {
     try{
@@ -2338,6 +2349,63 @@ router.post('/AddOpinion', imageUpload.single('attachment'), async (req, res) =>
                     sendNotification(registrationToken, message)
                 }
             }
+        })
+
+    } catch(e) {
+        //Network or internal errors
+        console.log(e)
+        res.status(500).send({error:{message:"API internal error, refer console for more information."}})
+    }
+})
+
+router.post('/GetResponseForAllRequestsOfUser', async (req, res) => {
+    try{
+        const body = JSON.parse(JSON.stringify(req.body))
+
+        //Checking if any of feild is missing
+        let { UserEmail , pWord} = body
+
+        //Checking if any of feild is missing
+        const missing = []
+        if(!UserEmail || UserEmail == '' || !validator.isEmail(UserEmail)){
+            missing.push('UserEmail')
+        }
+        if(!pWord || pWord == ''){
+            missing.push('pWord')
+        }
+
+        //If anything missing sending it back to user with error
+        if(missing.length){
+            return res.status(403).send({
+                error:{
+                    message:'Error/missing feilds',
+                    missing,
+                },
+                data:req.body
+            })
+        }
+
+        //bcrypting password
+        pWord = await bcryptPass(pWord)
+        const query = `
+            CALL GetResponseForAllRequestsOfUser(?,?,@status);
+            Select @status;
+            Select * from TempSentRequests;
+            Select * from TempSentPhotosForOpinion;
+            Select * from TempFriendReplies;
+        `
+        const data = [UserEmail.toString(), pWord.toString()]
+        DBProcedure(query,data, (error, results) => {
+            if(error){
+                return res.status(error.status).send(error.response)
+            }
+
+            res.send({
+                status: results[1][0]['@status'],
+                TempSentRequests:results[2],
+                TempSentPhotosForOpinion:results[3],
+                TempFriendReplies:results[4]
+            })
         })
 
     } catch(e) {

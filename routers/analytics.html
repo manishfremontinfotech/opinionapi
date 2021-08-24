@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Opinion Analytics</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <style>
+        html {
+        scroll-behavior: smooth;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-light bg-light">
+        <div class="container-fluid">
+          <a class="navbar-brand">
+            <img src="data:image/png;base64,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" alt="logo" width="30" height="24" class="d-inline-block align-text-top">
+             &nbsp;Opinion Analytics
+          </a>
+        </div>
+    </nav>
+
+    <div id="error"></div>
+    <div id="success"></div>
+    <div id="login">
+        <div class="container-fluid">
+            <div class="row">
+              <div class="col-sm-4"></div>
+              <div class="col-sm-4 p-5" style="margin-top: 5vh;">
+                <form name="myForm">
+                  <div class="mb-3 text-center">
+                    <label for="exampleInputEmail1" class="form-label blockquote"><strong>Analytics</strong> Login</label>
+                  </div>
+                  <div class="mb-3">
+                    <label for="exampleInputEmail1" class="form-label">Start Date</label>
+                    <input type="date" class="form-control" name="start_date" placeholder="Start Date" >
+                  </div>
+                  <div class="mb-3">
+                    <label for="exampleInputEmail1" class="form-label">End Date</label>
+                    <input type="date" class="form-control" name="end_date" placeholder="End Date" >
+                  </div>
+                  <div class="mb-3">
+                    <label for="exampleInputPassword1" class="form-label">Password</label>
+                    <input type="password" class="form-control" name="password" placeholder="••••••••">
+                  </div>
+                  <div class="text-center" id="submitBtn">
+                    <button type="submit" name="submit" class="btn btn-primary" id="submitForm" value="Login">Submit</button>
+                  </div>
+                  <div id="Loading" style="display: none;" class="text-center mb-4">
+                    <div class="spinner-border text-primary " role="status">
+                        <span class="visually-hidden">Loading...</span>
+                      </div>
+                  </div>
+                </form>
+              </div>
+              <div class="col-sm-4"></div>
+            </div>
+          </div>
+    </div>
+
+    <div id="data" style="display: none;">
+        <div class="container-fluid mb-5">
+            <div class="row">
+                <div class="col-12 text-center">
+                    <h1 class="display-6">
+                        All Data
+                    </h1>
+                </div>
+                <div class="col-md-2"></div>
+                <div class="col-md-8">
+                    <canvas id="myallgraphChart" width="400" height="200"></canvas>
+                </div>
+                <div class="col-md-2"></div>
+            </div>
+        </div>
+        <div class="container-fluid mb-5">
+            <h1 class="display-5 mb-5 text-center">Todys's data</h1>
+            <div class="row">
+                <div class="col-md-4 text-center">
+                    <h1 class="display-6">
+                        ALL VS Active
+                    </h1>
+                    <div class="col-md-8">
+                        <canvas id="AllvsActiveUsersChart" width="400" height="200">No data</canvas>
+                    </div>
+                </div>
+                <div class="col-md-4 text-center">
+                    <h1 class="display-6">
+                        Total Response vs Posts
+                    </h1>
+                    <div class="col-md-8">
+                        <canvas id="responseVsPostTotalChart" width="400" height="200">No data</canvas>
+                    </div>
+                </div>
+                <div class="col-md-4 text-center">
+                    <h1 class="display-6">
+                        Response vs Posts Today
+                    </h1>
+                    <div class="col-md-8">
+                        <canvas id="responseVsPostTodayChart" width="400" height="200">No data</canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="container-fluid mb-5">
+            <div class="row">
+                <div class="col-12 text-center">
+                    <h1 class="display-6">
+                        Active users Today
+                    </h1>
+                </div>
+                <div class="col-md-2"></div>
+                <div class="col-md-8">
+                    <canvas id="ActiveUsersTodayChart" width="400" height="200"></canvas>
+                </div>
+                <div class="col-md-2"></div>
+            </div>
+        </div>
+        <div class="container-fluid mb-5">
+            <div class="row">
+                <div class="col-12 text-center">
+                    <h1 class="display-6">
+                        Total Poster today
+                    </h1>
+                </div>
+                <div class="col-md-2"></div>
+                <div class="col-md-8">
+                    <canvas id="TotalPostersTodayChart" width="400" height="200"></canvas>
+                </div>
+                <div class="col-md-2"></div>
+            </div>
+        </div>
+        <div class="container-fluid mb-5">
+            <div class="row">
+                <div class="col-12 text-center">
+                    <h1 class="display-6">
+                        Total Responders Today
+                    </h1>
+                </div>
+                <div class="col-md-2"></div>
+                <div class="col-md-8">
+                    <canvas id="TotalRespondersTodayChart" width="400" height="200"></canvas>
+                </div>
+                <div class="col-md-2"></div>
+            </div>
+        </div>
+        <div class="container-fluid mb-5">
+            <div class="row">
+                <div class="col-12 text-center">
+                    <h1 class="display-6">
+                        Posters Today
+                    </h1>
+                </div>
+                <div class="col-md-2"></div>
+                <div class="col-md-8">
+                    <canvas id="poststodayChart" width="400" height="200"></canvas>
+                </div>
+                <div class="col-md-2"></div>
+            </div>
+        </div>
+        <div class="container-fluid mb-5">
+            <div class="row">
+                <div class="col-12 text-center">
+                    <h1 class="display-6">
+                        Responsders today
+                    </h1>
+                </div>
+                <div class="col-md-2"></div>
+                <div class="col-md-8">
+                    <canvas id="responsestodayChart" width="400" height="200"></canvas>
+                </div>
+                <div class="col-md-2"></div>
+            </div>
+        </div>
+        <div class="container-fluid mb-5">
+            <div class="row">
+                <div class="col-12 text-center">
+                    <h1 class="display-6">
+                        Total Posts
+                    </h1>
+                </div>
+                <div class="col-md-2"></div>
+                <div class="col-md-8">
+                    <canvas id="totalpostsChart" width="400" height="200"></canvas>
+                </div>
+                <div class="col-md-2"></div>
+            </div>
+        </div>
+        <div class="container-fluid mb-5">
+            <div class="row">
+                <div class="col-12 text-center">
+                    <h1 class="display-6">
+                        Total Responses
+                    </h1>
+                </div>
+                <div class="col-md-2"></div>
+                <div class="col-md-8">
+                    <canvas id="totalresponsesChart" width="400" height="200"></canvas>
+                </div>
+                <div class="col-md-2"></div>
+            </div>
+        </div>
+        <div class="container-fluid mb-5">
+            <div class="row">
+                <div class="col-12 text-center">
+                    <h1 class="display-6">
+                        Total Users
+                    </h1>
+                </div>
+                <div class="col-md-2"></div>
+                <div class="col-md-8">
+                    <canvas id="totalusersChart" width="400" height="200"></canvas>
+                </div>
+                <div class="col-md-2"></div>
+            </div>
+        </div>
+    </div>
+
+    
+
+    <div style="margin-bottom: 100px;">
+        <br>
+    </div>
+
+    <footer class="bg-light text-center text-lg-start" style="position: fixed; bottom: 0; left: 0; width: 100%; z-index: 100;">
+        <div class="text-center p-3 text-white" style="background-image: linear-gradient(30deg,#b900a6, #0071bd);">
+          © 2020 Copyright:
+          <a class="text-white" href="https://ginger.apps/">Ginger.apps</a>
+        </div>
+      </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const submitBtn = document.getElementById('submitBtn')
+        const loading = document.getElementById('Loading')
+        
+        let ctx = document.getElementById('myallgraphChart').getContext('2d');
+        let myallgraphChart
+        let AllvsActiveUsersctx = document.getElementById('AllvsActiveUsersChart').getContext('2d');
+        let AllvsActiveUsersChart
+        let responseVsPostTotalctx = document.getElementById('responseVsPostTotalChart').getContext('2d');
+        let responseVsPostTotalChart
+        let responseVsPostTodayctx = document.getElementById('responseVsPostTodayChart').getContext('2d');
+        let responseVsPostTodayChart
+
+
+        let ActiveUsersTodayctx = document.getElementById('ActiveUsersTodayChart').getContext('2d');
+        let ActiveUsersTodayChart
+        let TotalPostersTodayctx = document.getElementById('TotalPostersTodayChart').getContext('2d');
+        let TotalPostersTodayChart
+        let TotalRespondersTodayctx = document.getElementById('TotalRespondersTodayChart').getContext('2d');
+        let TotalRespondersTodayChart
+        let poststodayctx = document.getElementById('poststodayChart').getContext('2d');
+        let poststodayChart
+        let responsestodayctx = document.getElementById('responsestodayChart').getContext('2d');
+        let responsestodayChart
+        let totalpostsctx = document.getElementById('totalpostsChart').getContext('2d');
+        let totalpostsChart
+        let totalresponsesctx = document.getElementById('totalresponsesChart').getContext('2d');
+        let totalresponsesChart
+        let totalusersctx = document.getElementById('totalusersChart').getContext('2d');
+        let totalusersChart
+
+
+        let loggedIn = false;
+        let login_pass = null
+        window.onload = function (){
+            login_pass = sessionStorage.alalytics_pass
+            if(login_pass){
+                //document.getElementById('login').style.display = 'none'
+                document.getElementById('data').style.display = 'block'
+                //document.getElementById('logout').style.display = 'block'
+            }
+        }
+
+        document.getElementById('submitForm').addEventListener('click',(e) => {
+            e.preventDefault()
+
+            let sd = document.myForm.start_date.value, ed = document.myForm.end_date.value, pass = document.myForm.password.value
+            if(!sd || !((new Date(sd) !== "Invalid Date") && !isNaN(new Date(sd)))){
+                showError('Please provide starting date')
+            } else if(!ed || !(new Date(ed) !== "Invalid Date") && !isNaN(new Date(ed))){
+                showError('Please provide ending date')
+            } else if(!pass){
+                showError('Please provide password')
+            } else {
+                let datein = new Date(sd)
+                let start = `${datein.getFullYear().toString()}-${('0' + (datein.getMonth()+1)).slice(-2).toString()}-${('0' + datein.getDate()).slice(-2).toString()}`
+                delete datein
+                datein = new Date(ed)
+                let end = `${datein.getFullYear().toString()}-${('0' + (datein.getMonth()+1)).slice(-2)}-${('0' + datein.getDate()).slice(-2).toString()}`
+                delete datein
+                submitBtn.style.display = 'none'
+                loading.style.display = "block"
+                document.getElementById('submitForm').disabled = true
+                console.log("dates:::::",start, end, sd, ed)
+                axios({
+                    method: 'post',
+                    url: 'http://3.142.90.164:3000/getAnalyticsData',
+                    data: {
+                        "StartDate":start, 
+                        "Endate":end,
+                        "Pword":pass
+                    }
+                }).then((result) => {
+                    submitBtn.style.display = 'block'
+                    loading.style.display = "none"
+                    document.getElementById('data').scrollIntoView(true);
+                    document.getElementById('submitForm').disabled = false
+                    console.log("Results::::",result)
+                    document.getElementById('data').style.display = 'block'
+                    plotchar(result.data.TempAnalyticsData)
+                }).catch((err) => {
+                    submitBtn.style.display = 'block'
+                    loading.style.display = "none"
+                    document.getElementById('submitForm').disabled = false
+                    showError("Failed to fetch data.")
+                    console.log(err)
+                });
+            }
+        })
+
+        function showError(error){
+            document.getElementById('error').innerHTML = 
+            `
+            <div class="alert alert-danger alert-dismissible fade show" role="alert" id="alert">
+                ${error}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            `
+            document.body.scrollTop = 0; // For Safari
+             document.documentElement.scrollTop = 0;
+        }
+
+        function showMsg(msg){
+            document.getElementById('success').innerHTML = 
+            `
+            <div class="alert alert-success alert-dismissible fade show" role="alert" id="alert">
+                ${msg}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            `
+            document.body.scrollTop = 0; // For Safari
+            document.documentElement.scrollTop = 0;
+        }
+
+        function plotchar(data){
+            let ActiveUsersToday = {data: [],max: 0,min: 0,sum: data[data.length - 1].ActiveUsersToday,label: 'Active Users'}
+            let TotalPostersToday = {data: [],max: 0,min: 0,sum: data[data.length - 1].TotalPostersToday,label: 'Posters'}
+            let TotalRespondersToday = {data: [],max: 0,min: 0,sum: data[data.length - 1].TotalRespondersToday,label: 'Reponders'}
+            let date = {data: [],max: 0,min: 0,label: 'Date'}
+            let poststoday = {data: [],max: 0,min: 0,sum: data[data.length - 1].poststoday,label: 'Posts'}
+            let responsestoday = {data: [],max: 0,min: 0,sum: data[data.length - 1].responsestoday,label: 'Response'}
+            let totalposts = {data: [],max: 0,min: 0,sum: data[data.length - 1].totalposts,label: 'Total Posts'}
+            let totalresponses = {data: [],max: 0,min: 0,sum: data[data.length - 1].totalresponses,label: 'Total Responses'}
+            let totalusers = {data: [],max: 0,min: 0,sum: data[data.length - 1].totalusers,label: 'Total Users'}
+
+            for (let i = 0; i < data.length; i++) {
+                const element = data[i];
+                let d = new Date(element.date)
+                d = `${d.getFullYear()}-${('0' + (d.getMonth()+1)).slice(-2)}-${('0' + d.getDate()).slice(-2)}`
+                date.data.push(d)
+                delete d
+
+                ActiveUsersToday.data.push(element.ActiveUsersToday)
+                TotalPostersToday.data.push(element.TotalPostersToday)
+                TotalRespondersToday.data.push(element.TotalRespondersToday)
+                poststoday.data.push(element.poststoday)
+                responsestoday.data.push(element.responsestoday)
+                totalposts.data.push(element.totalposts)
+                totalresponses.data.push(element.totalresponses)
+                totalusers.data.push(element.totalusers)
+
+                ActiveUsersToday.max = element.ActiveUsersToday > ActiveUsersToday.max?element.ActiveUsersToday: ActiveUsersToday.max
+                TotalPostersToday.max = element.TotalPostersToday > TotalPostersToday.max?element.TotalPostersToday: TotalPostersToday.max
+                TotalRespondersToday.max = element.TotalRespondersToday > TotalRespondersToday.max?element.TotalRespondersToday: TotalRespondersToday.max
+                poststoday.max = element.poststoday > poststoday.max?element.poststoday: poststoday.max
+                responsestoday.max = element.responsestoday > responsestoday.max?element.responsestoday: responsestoday.max
+                totalposts.max = element.totalposts > totalposts.max?element.totalposts: totalposts.max
+                totalresponses.max = element.totalresponses > totalresponses.max?element.totalresponses: totalresponses.max
+                totalusers.max = element.totalusers > totalusers.max?element.totalusers: totalusers.max
+
+                ActiveUsersToday.min = element.ActiveUsersToday > ActiveUsersToday.min?element.ActiveUsersToday: ActiveUsersToday.min
+                TotalPostersToday.min = element.TotalPostersToday > TotalPostersToday.min?element.TotalPostersToday: TotalPostersToday.min
+                ActiveUsersToday.min = element.ActiveUsersToday > ActiveUsersToday.min?element.ActiveUsersToday: ActiveUsersToday.min
+                TotalPostersToday.min = element.TotalPostersToday > TotalPostersToday.min?element.TotalPostersToday: TotalPostersToday.min
+                TotalRespondersToday.min = element.TotalRespondersToday > TotalRespondersToday.min?element.TotalRespondersToday: TotalRespondersToday.min
+                poststoday.min = element.poststoday > poststoday.min?element.poststoday: poststoday.min
+                responsestoday.min = element.responsestoday > responsestoday.min?element.responsestoday: responsestoday.min
+                totalposts.min = element.totalposts > totalposts.min?element.totalposts: totalposts.min
+                totalresponses.min = element.totalresponses > totalresponses.min?element.totalresponses: totalresponses.min
+                totalusers.min = element.totalusers > totalusers.min?element.totalusers: totalusers.min
+
+            }
+
+            console.log("date array:::", date)
+            if(myallgraphChart instanceof Chart){
+                myallgraphChart.destroy()
+                delete myallgraphChart
+            }
+            if(AllvsActiveUsersChart instanceof Chart){
+                AllvsActiveUsersChart.destroy()
+                delete AllvsActiveUsersChart
+            }
+            if(responseVsPostTotalChart instanceof Chart){
+                responseVsPostTotalChart.destroy()
+                delete responseVsPostTotalChart
+            }
+            if(responseVsPostTodayChart instanceof Chart){
+                responseVsPostTodayChart.destroy()
+                delete responseVsPostTodayChart
+            }
+
+            if(ActiveUsersTodayChart instanceof Chart){
+                ActiveUsersTodayChart.destroy()
+                delete ActiveUsersTodayChart
+            }
+            if(TotalPostersTodayChart instanceof Chart){
+                TotalPostersTodayChart.destroy()
+                delete TotalPostersTodayChart
+            }
+            if(TotalRespondersTodayChart instanceof Chart){
+                TotalRespondersTodayChart.destroy()
+                delete TotalRespondersTodayChart
+            }
+            if(poststodayChart instanceof Chart){
+                poststodayChart.destroy()
+                delete poststodayChart
+            }
+            if(responsestodayChart instanceof Chart){
+                responsestodayChart.destroy()
+                delete responsestodayChart
+            }
+            if(totalpostsChart instanceof Chart){
+                totalpostsChart.destroy()
+                delete totalpostsChart
+            }
+            if(totalresponsesChart instanceof Chart){
+                totalresponsesChart.destroy()
+                delete totalresponsesChart
+            }
+            if(totalusersChart instanceof Chart){
+                totalusersChart.destroy()
+                delete totalusersChart
+            }
+
+            myallgraphChart = new Chart(ctx, {
+                type: "line",
+                data: {
+                    labels: date.data,
+                    datasets: [{
+                        label:totalusers.label,
+                        backgroundColor: "tomato",
+                        borderColor: "tomato",
+                        data: totalusers.data
+                    },
+                    {
+                        label:ActiveUsersToday.label,
+                        backgroundColor: "purlple",
+                        borderColor: "purple",
+                        data: ActiveUsersToday.data
+                    },
+                    {
+                        label:TotalPostersToday.label,
+                        backgroundColor: "blue",
+                        borderColor: "blue",
+                        data: TotalPostersToday.data
+                    },
+                    {
+                        label:TotalRespondersToday.label,
+                        backgroundColor: "black",
+                        borderColor: "black",
+                        data: TotalRespondersToday.data
+                    },
+                    {
+                        label:poststoday.label,
+                        backgroundColor: "gray",
+                        borderColor: "gray",
+                        data: poststoday.data
+                    },
+                    {
+                        label:responsestoday.label,
+                        backgroundColor: "seagreen",
+                        borderColor: "seagreen",
+                        data: responsestoday.data
+                    },
+                    {
+                        label:totalposts.label,
+                        backgroundColor: "red",
+                        borderColor: "red",
+                        data: totalposts.data
+                    },
+                    {
+                        label:totalresponses.label,
+                        backgroundColor: "lime",
+                        borderColor: "lime",
+                        data: totalresponses.data
+                    }
+                ]
+                },
+                options: {
+                    scales: {
+                        yAxes: [{ticks: {min:totalusers.min, max:totalusers.max}}]
+                    }
+                }
+            });
+
+            AllvsActiveUsersChart = new Chart(AllvsActiveUsersctx, {
+                type: "doughnut",
+                data: {
+                    labels: [
+                        'Active',
+                        'ALL users'
+                    ],
+                    datasets: [{
+                        label: 'Total vs Active Users',
+                        data: [ActiveUsersToday.sum, totalusers.sum ],
+                        backgroundColor: [
+                        'rgb(255, 99, 132)',
+                        'rgb(54, 162, 235)'
+                        ],
+                        hoverOffset: 4
+                    }]
+                }
+            });
+
+            responseVsPostTotalChart = new Chart(responseVsPostTotalctx, {
+                type: "doughnut",
+                data: {
+                    labels: [
+                        'Response',
+                        'Posts'
+                    ],
+                    datasets: [{
+                        label: 'Total vs Active Users',
+                        data: [totalresponses.sum, totalposts.sum],
+                        backgroundColor: [
+                        'rgb(255, 99, 132)',
+                        'rgb(54, 162, 235)'
+                        ],
+                        hoverOffset: 4
+                    }]
+                }
+            });
+
+            responseVsPostTodayChart = new Chart(responseVsPostTodayctx, {
+                type: "doughnut",
+                data: {
+                    labels: [
+                        'Resoibse',
+                        'Posts'
+                    ],
+                    datasets: [{
+                        data: [TotalRespondersToday.sum, TotalPostersToday.sum],
+                        backgroundColor: [
+                        'rgb(255, 99, 132)',
+                        'rgb(54, 162, 235)'
+                        ],
+                        hoverOffset: 4
+                    }]
+                }
+            });
+
+            ActiveUsersTodayChart = new Chart(ActiveUsersTodayctx, {
+                type: "line",
+                data: {
+                    labels: date.data,
+                    datasets: [{
+                        label:ActiveUsersToday.label,
+                        backgroundColor: "tomato",
+                        borderColor: "tomato",
+                        data: ActiveUsersToday.data
+                    }]
+                },
+                options: {
+                    scales: {
+                        yAxes: [{ticks: {min:ActiveUsersToday.min, max:ActiveUsersToday.max}}]
+                    }
+                }
+            });
+            TotalPostersTodayChart = new Chart(TotalPostersTodayctx, {
+                type: "line",
+                data: {
+                    labels: date.data,
+                    datasets: [{
+                        label:TotalPostersToday.label,
+                        backgroundColor: "red",
+                        borderColor: "red",
+                        data: TotalPostersToday.data
+                    }]
+                },
+                options: {
+                    scales: {
+                        yAxes: [{ticks: {min:TotalPostersToday.min, max:TotalPostersToday.max}}]
+                    }
+                }
+            });
+            TotalRespondersTodayChart = new Chart(TotalRespondersTodayctx, {
+                type: "line",
+                data: {
+                    labels: date.data,
+                    datasets: [{
+                        label:TotalRespondersToday.label,
+                        backgroundColor: "lime",
+                        borderColor: "lime",
+                        data: TotalRespondersToday.data
+                    }]
+                },
+                options: {
+                    scales: {
+                        yAxes: [{ticks: {min:TotalRespondersToday.min, max:TotalRespondersToday.max}}]
+                    }
+                }
+            });
+            poststodayChart = new Chart(poststodayctx, {
+                type: "line",
+                data: {
+                    labels: date.data,
+                    datasets: [{
+                        label:poststoday.label,
+                        backgroundColor: "blue",
+                        borderColor: "blue",
+                        data: poststoday.data
+                    }]
+                },
+                options: {
+                    scales: {
+                        yAxes: [{ticks: {min:poststoday.min, max:poststoday.max}}]
+                    }
+                }
+            });
+            responsestodayChart = new Chart(responsestodayctx, {
+                type: "line",
+                data: {
+                    labels: date.data,
+                    datasets: [{
+                        label:responsestoday.label,
+                        backgroundColor: "orange",
+                        borderColor: "orange",
+                        data: responsestoday.data
+                    }]
+                },
+                options: {
+                    scales: {
+                        yAxes: [{ticks: {min:responsestoday.min, max:responsestoday.max}}]
+                    }
+                }
+            });
+            totalpostsChart = new Chart(totalpostsctx, {
+                type: "line",
+                data: {
+                    labels: date.data,
+                    datasets: [{
+                        label:totalposts.label,
+                        backgroundColor: "black",
+                        borderColor: "black",
+                        data: totalposts.data
+                    }]
+                },
+                options: {
+                    scales: {
+                        yAxes: [{ticks: {min:totalposts.min, max:totalposts.max}}]
+                    }
+                }
+            });
+            totalresponsesChart = new Chart(totalresponsesctx, {
+                type: "line",
+                data: {
+                    labels: date.data,
+                    datasets: [{
+                        label:totalresponses.label,
+                        backgroundColor: "purple",
+                        borderColor: "purple",
+                        data: totalresponses.data
+                    }]
+                },
+                options: {
+                    scales: {
+                        yAxes: [{ticks: {min:totalresponses.min, max:totalresponses.max}}]
+                    }
+                }
+            });
+            totalusersChart = new Chart(totalusersctx, {
+                type: "line",
+                data: {
+                    labels: date.data,
+                    datasets: [{
+                        label:totalusers.label,
+                        backgroundColor: "gray",
+                        borderColor: "gray",
+                        data: totalusers.data
+                    }]
+                },
+                options: {
+                    scales: {
+                        yAxes: [{ticks: {min:totalusers.min, max:totalusers.max}}]
+                    }
+                }
+            });
+
+
+        }
+
+    </script>
+</body>
+</html>
