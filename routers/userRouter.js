@@ -2447,8 +2447,9 @@ router.post('/GetRecievedOpinionRequests', async (req, res) => {
         const query = `
             CALL GetRecievedOpinionRequests(?,?,@status);
             Select @status;
-            Select * from TempRecievedOpinionRequests;
             Select * from TempPhotosOfOpinionRequests;
+            Select * from TempFriendsForRecievedRequests;
+            Select * from TempFriendsForReplies;
         `
         const data = [UserEmail.toString(), pWord.toString()]
         DBProcedure(query,data, (error, results) => {
@@ -2458,8 +2459,9 @@ router.post('/GetRecievedOpinionRequests', async (req, res) => {
 
             res.send({
                 status: results[1][0]['@status'],
-                TempRecievedOpinionRequests:results[2],
-                TempPhotosOfOpinionRequests:results[3]
+                TempPhotosOfOpinionRequests: results[2],
+                TempFriendsForRecievedRequests: results[3],
+                TempFriendsForReplies: results[4]
             })
         })
 
