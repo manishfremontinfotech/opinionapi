@@ -2390,9 +2390,9 @@ router.post('/GetResponseForAllRequestsOfUser', async (req, res) => {
         const query = `
             CALL GetResponseForAllRequestsOfUser(?,?,@status);
             Select @status;
-            Select * from TempSentRequests;
             Select * from TempSentPhotosForOpinion;
             Select * from TempFriendReplies;
+            Select * from TempFriendsForReplies;
         `
         const data = [UserEmail.toString(), pWord.toString()]
         DBProcedure(query,data, (error, results) => {
@@ -2402,9 +2402,9 @@ router.post('/GetResponseForAllRequestsOfUser', async (req, res) => {
 
             res.send({
                 status: results[1][0]['@status'],
-                TempSentRequests:results[2],
-                TempSentPhotosForOpinion:results[3],
-                TempFriendReplies:results[4]
+                TempSentPhotosForOpinion:results[2],
+                TempFriendReplies:results[3],
+                TempFriendsForReplies:results[4]
             })
         })
 
