@@ -2253,7 +2253,7 @@ router.post('/AddOpinion', imageUpload.single('attachment'), async (req, res) =>
         if(!pWord || pWord == ''){
             missing.push('pWord')
         }
-        if(!requestId || !validator.isNumeric(requestId.toString())){
+        if(requestId || !validator.isNumeric(requestId.toString())){
             missing.push('requestId')
         }
         if(max_array_size == 0){
@@ -2309,7 +2309,7 @@ router.post('/AddOpinion', imageUpload.single('attachment'), async (req, res) =>
         let data = []
         for (let i = 0; i < max_array_size; i++) {
             query += `CALL AddOpinion(?, ?, ?, ?, ?, ?, @status,  @NotiToakn, @message, ?); SELECT @status, @NotiToakn, @message;`
-            data.push(UserEmail.toString(),pWord.toString(), Number(requestId), Boolean(Number(favorite_array[i]))?1:0, comments, attachmentS3data.Location, photoId_array[i]?Number(photoId_array[i]):null)         
+            data.push(UserEmail.toString(),pWord.toString(), requestId?Number(requestId):null, Boolean(Number(favorite_array[i]))?1:0, comments, attachmentS3data.Location, photoId_array[i]?Number(photoId_array[i]):null)         
         }
 
         delete photoId_array
