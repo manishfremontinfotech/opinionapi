@@ -174,6 +174,7 @@ router.post('/addUser', imageUpload.single('image'), async (req, res) => {
        //req.file.buffer = await compressImage(req.file.buffer, 200, 200)
 
         /* Uplading to bucket S3 */
+        req.file.buffer = await sharp(req.file.buffer).resize({width: 200, height: 200}).png().toBuffer()
         const [s3data, error] = await upload_to_S3(req.file, false)
         if(error){
             return res.status(502).send({
