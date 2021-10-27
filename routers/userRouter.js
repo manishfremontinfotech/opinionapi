@@ -3,6 +3,7 @@ const SqlString = require('sqlstring');
 
 const validator = require('validator')
 const sanitizeHtml = require('sanitize-html')
+const axios = require('axios')
 
 //function for calling procedures in db
 const DBProcedure = require('../middleware/callDBProcedures')
@@ -2459,10 +2460,237 @@ router.post('/GetRecievedOpinionRequests', async (req, res) => {
             }
 
             res.send({
-                status: results[1][0]['@status'],
-                TempPhotosOfOpinionRequests: results[2],
-                TempFriendsForRecievedRequests: results[3],
-                TempFriendsForReplies: results[4]
+                //response
+            })
+        })
+
+    } catch(e) {
+        //Network or internal errors
+        console.log(e)
+        res.status(500).send({error:{message:"API internal error, refer console for more information."}})
+    }
+})
+
+router.post('/contactList', async (req, res) => {
+    try{
+        const body = JSON.parse(JSON.stringify(req.body))
+
+        //Checking if any of feild is missing
+        let { UserEmail , pWord, contactList} = body
+
+        //Checking if any of feild is missing
+        const missing = []
+        if(!UserEmail || UserEmail == '' || !validator.isEmail(UserEmail)){
+            missing.push('UserEmail')
+        }
+        if(!pWord || pWord == ''){
+            missing.push('pWord')
+        }
+        if(!contactList || !Array.isArray(contactList)){
+            missing.push('contactList')
+        }
+
+        //If anything missing sending it back to user with error
+        if(missing.length){
+            return res.status(403).send({
+                error:{
+                    message:'Error/missing feilds',
+                    missing,
+                },
+                data:req.body
+            })
+        }
+
+        const invalidContacts = []
+        const validContacts = []
+
+        const checkCountrycode = (number) => {
+            let d = number.substr(0,1)
+            for (let i = 2; i < 5; i++) {
+                if(countryCode.includes(Number(d))){
+                    return i
+                } else {
+                    d = number.substr(0, i)
+                }
+            }
+
+            return 0
+        }
+
+        for (let i = 0; i < contactList.length; i++) {
+            const contact = contactList[i]
+
+            if(contact.toString()[0] == '+' && (Number(contact.substr(1))).toString() != 'NaN'){
+                contact = contact.substr(1)
+                let len = checkCountrycode(Number(contact.substr(1)))
+                if(len == 0){
+                    invalidContacts.push(contact)
+                } else {
+                    validContacts.push({cc:Number(contact.substr(0, len)), ph:contact.substr(len)})
+                }
+            } else if((Number(contact)).toString() != 'NaN'){
+                validContacts.push({cc:0, ph:contact.substr(len)})
+            } else {
+                invalidContacts.push(contact)
+            }
+        }
+
+        //bcrypting password
+        pWord = await bcryptPass(pWord)
+        const query = `
+            query
+        `
+
+        DBProcedure(query,data, (error, results) => {
+            if(error){
+                return res.status(error.status).send(error.response)
+            }
+
+            res.send({
+                //response
+            })
+        })
+
+    } catch(e) {
+        //Network or internal errors
+        console.log(e)
+        res.status(500).send({error:{message:"API internal error, refer console for more information."}})
+    }
+})
+
+
+router.post('/facebookInfo', async (req, res) => {
+    try{
+        const body = JSON.parse(JSON.stringify(req.body))
+
+        //Checking if any of feild is missing
+        let { UserEmail , pWord, authToken} = body
+
+        //Checking if any of feild is missing
+        const missing = []
+        if(!UserEmail || UserEmail == '' || !validator.isEmail(UserEmail)){
+            missing.push('UserEmail')
+        }
+        if(!pWord || pWord == ''){
+            missing.push('pWord')
+        }
+        if(!authToken || authToken == ''){
+            missing.push('authToken')
+        }
+
+        //If anything missing sending it back to user with error
+        if(missing.length){
+            return res.status(403).send({
+                error:{
+                    message:'Error/missing feilds',
+                    missing,
+                },
+                data:req.body
+            })
+        }
+
+        axios({
+            method:'get',
+            url: 'https://graph.facebook.com/USER-ID?fields=id,name,email,picture&access_token=' + authToken,
+            headers:{
+                'Content-type':'application/json'
+            }
+        }).then(response => {
+            console.log(response.data)
+            const {name, email, picture} = response.data
+            //picture.url
+            
+            //bcrypting password
+            pWord = await bcryptPass(pWord)
+            const query = `
+                query
+            `
+
+            DBProcedure(query,data, (error, results) => {
+                if(error){
+                    return res.status(error.status).send(error.response)
+                }
+
+                res.send({
+                    //response
+                })
+            })
+        }).catch(error => {
+            console.log(error.response.data)
+            res.status(404).send({
+                msg:"Failed to fetch info"
+            })
+        })
+
+    } catch(e) {
+        //Network or internal errors
+        console.log(e)
+        res.status(500).send({error:{message:"API internal error, refer console for more information."}})
+    }
+})
+
+router.post('/googleInfo', async (req, res) => {
+    try{
+        const body = JSON.parse(JSON.stringify(req.body))
+
+        //Checking if any of feild is missing
+        let { UserEmail , pWord, authToken} = body
+
+        //Checking if any of feild is missing
+        const missing = []
+        if(!UserEmail || UserEmail == '' || !validator.isEmail(UserEmail)){
+            missing.push('UserEmail')
+        }
+        if(!pWord || pWord == ''){
+            missing.push('pWord')
+        }
+        if(!authToken || authToken == ''){
+            missing.push('authToken')
+        }
+
+        //If anything missing sending it back to user with error
+        if(missing.length){
+            return res.status(403).send({
+                error:{
+                    message:'Error/missing feilds',
+                    missing,
+                },
+                data:req.body
+            })
+        }
+
+        axios({
+            method:'get',
+            url: 'https://www.googleapis.com/oauth2/v3/userinfo',
+            headers:{
+                'Authorization': 'Bearer ' + authToken
+            }
+        }).then(response => {
+            console.log(response.data)
+            const {name, email, picture} = response.data
+
+            //bcrypting password
+            pWord = await bcryptPass(pWord)
+            const query = `
+                query
+            `
+
+            DBProcedure(query,data, (error, results) => {
+                if(error){
+                    return res.status(error.status).send(error.response)
+                }
+
+                res.send({
+                    status: results[1][0]['@status'],
+                    TempPhotosOfOpinionRequests: results[2],
+                    TempFriendsForRecievedRequests: results[3],
+                    TempFriendsForReplies: results[4]
+                })
+            })
+        }).catch(error => {
+            console.log(error.response.data)
+            res.status(404).send({
+                msg:"Failed to fetch info"
             })
         })
 
