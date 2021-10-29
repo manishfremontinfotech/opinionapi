@@ -2460,7 +2460,10 @@ router.post('/GetRecievedOpinionRequests', async (req, res) => {
             }
 
             res.send({
-                //response
+                status: results[1][0]['@status'],
+                TempPhotosOfOpinionRequests: results[2],
+                TempFriendsForRecievedRequests: results[3],
+                TempFriendsForReplies: results[4]
             })
         })
 
@@ -2526,10 +2529,10 @@ router.post('/contactList', async (req, res) => {
                 if(len == 0){
                     invalidContacts.push(contact)
                 } else {
-                    validContacts.push({cc:Number(contact.substr(0, len)), ph:contact.substr(len)})
+                    validContacts.push({cc:Number(contact.substr(0, len)), ph:contact.substr(len), cp:contact})
                 }
             } else if((Number(contact)).toString() != 'NaN'){
-                validContacts.push({cc:0, ph:contact.substr(len)})
+                validContacts.push({cc:0, ph:contact.substr(len), cp: contact})
             } else {
                 invalidContacts.push(contact)
             }
@@ -2538,17 +2541,47 @@ router.post('/contactList', async (req, res) => {
         //bcrypting password
         pWord = await bcryptPass(pWord)
         const query = `
-            query
+            
         `
 
-        DBProcedure(query,data, (error, results) => {
+        DBProcedure(`CALL GetUsersForContactList(?,?,@status); Select @status;`,[UserEmail, pWord], (error, results) => {
             if(error){
                 return res.status(error.status).send(error.response)
             }
 
-            res.send({
-                //response
-            })
+            if(!results[1][0]['@status']){
+                return res.send({
+                    status:results[1][0]['@status'],
+                    invalidContacts
+                })
+            }
+
+            if(validContacts.length){
+                const data = []
+                let query = `Insert into TempContactList(countrycode, number, PhoneWithCountry) values `
+                for (let i = 0; i < validContacts.length; i++) {
+                    const contact = validContacts[i];
+                    query += `(?,?,?),`
+                    data.push(contact.cc, contact.ph, contact.cp)
+                }
+
+                query = query.slice(0, -1) + '; Select * from TempUsersFromContactList;'
+                DBProcedure(query, data, (error, results) => {
+                    if(error){
+                        return res.status(error.status).send(error.response)
+                    }
+
+                    return res.send({
+                        invalidContacts,
+                        constactUsers: results[1]
+                    })
+                })
+            } else {
+                res.send({
+                    constactUsers: [],
+                    invalidContacts
+                })
+            }
         })
 
     } catch(e) {
@@ -2564,18 +2597,15 @@ router.post('/facebookInfo', async (req, res) => {
         const body = JSON.parse(JSON.stringify(req.body))
 
         //Checking if any of feild is missing
-        let { UserEmail , pWord, authToken} = body
+        const {authToken, refreshToken} = body
 
         //Checking if any of feild is missing
         const missing = []
-        if(!UserEmail || UserEmail == '' || !validator.isEmail(UserEmail)){
-            missing.push('UserEmail')
-        }
-        if(!pWord || pWord == ''){
-            missing.push('pWord')
-        }
         if(!authToken || authToken == ''){
             missing.push('authToken')
+        }
+        if(!refreshToken || refreshToken == ''){
+            missing.push('refreshToken')
         }
 
         //If anything missing sending it back to user with error
@@ -2595,16 +2625,16 @@ router.post('/facebookInfo', async (req, res) => {
             headers:{
                 'Content-type':'application/json'
             }
-        }).then(response => {
+        }).then( async response => {
             console.log(response.data)
             const {name, email, picture} = response.data
-            //picture.url
-            
+
             //bcrypting password
             pWord = await bcryptPass(pWord)
             const query = `
-                query
+                call AddUser(?,?,?,?,?,@status,?,?,?,?,@msg);Select @status,@msg;
             `
+            const data = [email, name, null, null, picture, null, null, null, refreshToken]
 
             DBProcedure(query,data, (error, results) => {
                 if(error){
@@ -2612,7 +2642,8 @@ router.post('/facebookInfo', async (req, res) => {
                 }
 
                 res.send({
-                    //response
+                    status: results[1][0]['@status'],
+                    msg: results[1][0]['@msg']
                 })
             })
         }).catch(error => {
@@ -2634,18 +2665,15 @@ router.post('/googleInfo', async (req, res) => {
         const body = JSON.parse(JSON.stringify(req.body))
 
         //Checking if any of feild is missing
-        let { UserEmail , pWord, authToken} = body
+        const {authToken, refreshToken} = body
 
         //Checking if any of feild is missing
         const missing = []
-        if(!UserEmail || UserEmail == '' || !validator.isEmail(UserEmail)){
-            missing.push('UserEmail')
-        }
-        if(!pWord || pWord == ''){
-            missing.push('pWord')
-        }
         if(!authToken || authToken == ''){
             missing.push('authToken')
+        }
+        if(!refreshToken || refreshToken == ''){
+            missing.push('refreshToken')
         }
 
         //If anything missing sending it back to user with error
@@ -2665,15 +2693,16 @@ router.post('/googleInfo', async (req, res) => {
             headers:{
                 'Authorization': 'Bearer ' + authToken
             }
-        }).then(response => {
+        }).then( async response => {
             console.log(response.data)
             const {name, email, picture} = response.data
 
             //bcrypting password
             pWord = await bcryptPass(pWord)
             const query = `
-                query
+                call AddUser(?,?,?,?,?,@status,?,?,?,?,@msg);Select @status,@msg;
             `
+            const data = [email, name, null, null, picture, null, null, refreshToken, null]
 
             DBProcedure(query,data, (error, results) => {
                 if(error){
@@ -2682,9 +2711,7 @@ router.post('/googleInfo', async (req, res) => {
 
                 res.send({
                     status: results[1][0]['@status'],
-                    TempPhotosOfOpinionRequests: results[2],
-                    TempFriendsForRecievedRequests: results[3],
-                    TempFriendsForReplies: results[4]
+                    msg: results[1][0]['@msg']
                 })
             })
         }).catch(error => {
@@ -2701,5 +2728,110 @@ router.post('/googleInfo', async (req, res) => {
     }
 })
 
+router.post('/removeOpinionRequest', async (req, res) => {
+    try{
+
+        const body = JSON.parse(JSON.stringify(req.body))
+
+        let { UserEmail, requestId, Pword} = body
+
+        //Checking if any of feild is missing
+        const missing = []
+        if(!UserEmail || UserEmail == '' || !validator.isEmail(UserEmail)){
+            missing.push('UserEmail')
+        }
+        if(!requestId || requestId == '' || typeof requestId != 'number'){
+            missing.push('requestId')
+        }
+        if(!Pword || Pword == '' || Pword == 'undefined'){
+            missing.push('Pword')
+        }
+
+        //If anything missing sending it back to user with error
+        if(missing.length){
+            return res.status(400).send({
+                error:{
+                    message:'Error/missing feilds',
+                    missing,
+                },
+                data:req.body
+            })
+        }
+
+        //bcrypting password
+        Pword = await bcryptPass(Pword)
+        //calling database
+        const query = `CALL RemoveOpinionRequest(?,?,?,@status); SELECT @status`
+        const data = [UserEmail.toString(), Number(requestId), Pword.toString()]
+
+        DBProcedure(query,data, (error, results) => {
+            if(error){
+                return res.status(error.status).send(error.response)
+            }
+
+            res.send({
+                status:results[1][0]['@status']
+            })
+        })
+
+    } catch(e) {
+        //Network or internal errors
+        console.log(e)
+        res.status(500).send({error:{message:"API internal error, refer console for more information."}})
+    }
+})
+
+router.post('/removeRecievedOpinionRequest', async (req, res) => {
+    try{
+
+        const body = JSON.parse(JSON.stringify(req.body))
+
+        let { UserEmail, requestId, Pword} = body
+
+        //Checking if any of feild is missing
+        const missing = []
+        if(!UserEmail || UserEmail == '' || !validator.isEmail(UserEmail)){
+            missing.push('UserEmail')
+        }
+        if(!requestId || requestId == '' || typeof requestId != 'number'){
+            missing.push('requestId')
+        }
+        if(!Pword || Pword == '' || Pword == 'undefined'){
+            missing.push('Pword')
+        }
+
+        //If anything missing sending it back to user with error
+        if(missing.length){
+            return res.status(400).send({
+                error:{
+                    message:'Error/missing feilds',
+                    missing,
+                },
+                data:req.body
+            })
+        }
+
+        //bcrypting password
+        Pword = await bcryptPass(Pword)
+        //calling database
+        const query = `CALL RemoveRecievedOpinionRequest(?,?,?,@status); SELECT @status`
+        const data = [UserEmail.toString(), Number(requestId), Pword.toString()]
+
+        DBProcedure(query,data, (error, results) => {
+            if(error){
+                return res.status(error.status).send(error.response)
+            }
+
+            res.send({
+                status:results[1][0]['@status']
+            })
+        })
+
+    } catch(e) {
+        //Network or internal errors
+        console.log(e)
+        res.status(500).send({error:{message:"API internal error, refer console for more information."}})
+    }
+})
 
 module.exports = router
