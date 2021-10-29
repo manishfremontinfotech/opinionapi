@@ -2607,6 +2607,7 @@ router.post('/facebookInfo', async (req, res) => {
         if(!refreshToken || refreshToken == ''){
             missing.push('refreshToken')
         }
+        
 
         //If anything missing sending it back to user with error
         if(missing.length){
