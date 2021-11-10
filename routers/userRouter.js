@@ -2763,7 +2763,7 @@ router.post('/removeOpinionRequest', async (req, res) => {
         Pword = await bcryptPass(Pword)
         //calling database
         const query = `CALL RemoveOpinionRequest(?,?,?,@status); SELECT @status`
-        const data = [UserEmail.toString(), Number(requestId), Pword.toString()]
+        const data = [UserEmail.toString(),, Pword.toString(), Number(requestId)]
 
         DBProcedure(query,data, (error, results) => {
             if(error){
