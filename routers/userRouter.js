@@ -2255,7 +2255,7 @@ router.post('/AddOpinion', imageUpload.single('attachment'), async (req, res) =>
         if(!pWord || pWord == ''){
             missing.push('pWord')
         }
-        if(requestId || !validator.isNumeric(requestId.toString())){
+        if(!requestId || !validator.isNumeric(requestId.toString())){
             missing.push('requestId')
         }
         if(max_array_size == 0){
@@ -2769,7 +2769,7 @@ router.post('/removeOpinionRequest', async (req, res) => {
             if(error){
                 return res.status(error.status).send(error.response)
             }
-
+            console.log(results)
             res.send({
                 status:results[1][0]['@status']
             })
