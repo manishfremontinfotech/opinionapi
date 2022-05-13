@@ -2699,7 +2699,7 @@ router.post('/googleInfo', async (req, res) => {
             const {name, email, picture} = response.data
 
             //bcrypting password
-            pWord = await bcryptPass(pWord)
+            //pWord = await bcryptPass(pWord)
             const query = `
                 call AddUser(?,?,?,?,?,@status,?,?,?,?,@msg);Select @status,@msg;
             `
