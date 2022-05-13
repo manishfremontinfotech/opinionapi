@@ -2716,7 +2716,7 @@ router.post('/googleInfo', async (req, res) => {
                 })
             })
         }).catch(error => {
-            console.log(error.response.data)
+            console.log(error)
             res.status(404).send({
                 msg:"Failed to fetch info"
             })
