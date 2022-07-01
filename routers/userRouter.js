@@ -2697,24 +2697,73 @@ router.post('/googleInfo', async (req, res) => {
         }).then( async response => {
             console.log(response.data)
             const {name, email, picture} = response.data
-
-            //bcrypting password
-            //pWord = await bcryptPass(pWord)
-            const query = `
-                call AddUser(?,?,?,?,?,@status,?,?,?,?,@msg);Select @status,@msg;
+	    
+	    const query1 = `
+                call IfUserExists(?,?,?,@status);Select @status;
             `
-            const data = [email, name, null, null, picture, null, null, refreshToken, null]
-
-            DBProcedure(query,data, (error, results) => {
+            const data1 = [email, null, null]
+	    
+	    DBProcedure(query,data, (error, results) => {
                 if(error){
                     return res.status(error.status).send(error.response)
                 }
+		let temp = results[1][0]['@status']
+		if(temp.toString() == '1'){
+			const query = `
+				call AddUser(?,?,?,?,?,@status,?,?,?,?,@msg);Select @status,@msg;
+			    `
+			    const data = [email, name, null, null, picture, null, null, refreshToken, null]
 
-                res.send({
-                    status: results[1][0]['@status'],
-                    msg: results[1][0]['@msg']
-                })
+			    DBProcedure(query,data, (error, results) => {
+				if(error){
+				    return res.status(error.status).send(error.response)
+				}
+
+				res.send({
+				    status: results[1][0]['@status'],
+				    msg: results[1][0]['@msg']
+				})
+			    })
+		}else{
+			const query = `
+				call GetGoogleSignInToken(?,@status);Select @status;
+			    `
+			    const data = [email, name, null, null, picture, null, null, refreshToken, null]
+
+			    DBProcedure(query,data, (error, results) => {
+				if(error){
+				    return res.status(error.status).send(error.response)
+				}
+
+				    let token =  results[1][0]['@status'],
+				    
+					    const query3 = `CALL GetUserProfile(?,?, @status, @PhoneNumber, @country, @photo, @emailId, @name, @msg); SELECT @status, @PhoneNumber, @country, @photo, @emailId, @name, @msg;`
+						const data3 = [UserSingUpId.toString(), token.toString()]
+
+						DBProcedure(query3,data3, (error, results) => {
+						    if(error){
+							return res.status(error.status).send(error.response)
+						    }
+
+						    console.log(results)
+						    res.send({
+							status:results[1][0]['@status'],
+							phoneNumber:results[1][0]['@PhoneNumber'],
+							country:results[1][0]['@country'],
+							emailId:results[1][0]['@emailId'],
+							name:results[1][0]['@name'],
+							photo:results[1][0]['@photo'],
+								message: results[1][0]['@msg'],
+							    token
+						    })
+						})
+			    })
+		}
             })
+
+            //bcrypting password
+            //pWord = await bcryptPass(pWord)
+            
         }).catch(error => {
             console.log(error)
             res.status(404).send({
