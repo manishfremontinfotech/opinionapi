@@ -2735,9 +2735,9 @@ router.post('/googleInfo', async (req, res) => {
 				    return res.status(error.status).send(error.response)
 				}
 
-				    let token =  results[1][0]['@status'],
+				    let token =  results[1][0]['@status']
 				    
-					    const query3 = `CALL GetUserProfile(?,?, @status, @PhoneNumber, @country, @photo, @emailId, @name, @msg); SELECT @status, @PhoneNumber, @country, @photo, @emailId, @name, @msg;`
+					    let query3 = `CALL GetUserProfile(?,?, @status, @PhoneNumber, @country, @photo, @emailId, @name, @msg); SELECT @status, @PhoneNumber, @country, @photo, @emailId, @name, @msg;`
 						const data3 = [UserSingUpId.toString(), token.toString()]
 
 						DBProcedure(query3,data3, (error, results) => {
